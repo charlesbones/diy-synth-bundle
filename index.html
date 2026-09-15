@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DIY Synth — Interactive Build Guide</title>
+<meta name="description" content="An interactive, 3D-illustrated build guide for the Arduino DIY Synth: print, wire and play a Modulino-powered drum machine and synthesizer." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎛️</text></svg>" />
+<link rel="stylesheet" href="css/style.css" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "./js/vendor/three.module.js",
+    "three/addons/": "./js/vendor/addons/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="app" data-project="diy-synth">
+  <header class="topbar">
+    <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open steps menu">☰</button>
+    <div class="brand"><span class="dot"></span> DIY Synth</div>
+    <div class="subtitle">Interactive build guide · Arduino Project Hub</div>
+    <div class="spacer"></div>
+    <div class="layout-switch" id="layoutSwitch" role="group" aria-label="Viewer layout">
+      <button data-layout="split" aria-label="Split layout">⬜ <span class="full">Split</span></button>
+      <button data-layout="hero" aria-label="Hero layout">▭ <span class="full">Hero</span></button>
+      <button data-layout="immersive" aria-label="Immersive layout">◧ <span class="full">Immersive</span></button>
+    </div>
+  </header>
+
+  <nav class="sidebar" id="sidebar"></nav>
+  <div class="overlay" id="overlay"></div>
+
+  <main class="content" id="content">
+    <div id="stepHeader"></div>
+    <div id="chipRow"></div>
+
+    <div class="layout-with-viewer" id="layout">
+      <div class="prose-col">
+        <div class="prose" id="stepBody"></div>
+      </div>
+
+      <div class="viewer-col" id="viewerCol">
+        <div class="viewer-box">
+          <canvas id="viewerCanvas" role="img" aria-label="3D model preview"></canvas>
+          <div class="viewer-hint" aria-hidden="true">Drag to orbit · Scroll to zoom</div>
+        </div>
+        <div class="viewer-toolbar" id="viewerToolbar"></div>
+        <div class="legend" id="viewerLegend"></div>
+        <!-- Mirrors the canvas's aria-label and announces it (and later
+             changes from the Exploded/variant toggles) to screen readers,
+             since a canvas isn't a live region on its own. -->
+        <div id="viewerAlt" class="sr-only" aria-live="polite" role="status"></div>
+      </div>
+    </div>
+
+    <button class="done-toggle" id="doneToggle">Mark step complete</button>
+
+    <div class="step-nav">
+      <button class="nav-btn" id="navPrev"><span class="label"><small>Back</small>—</span></button>
+      <button class="nav-btn primary" id="navNext"><span class="label"><small>Next</small>—</span></button>
+    </div>
+
+    <footer class="credits">
+      Guide content adapted from Arduino's
+      <a href="https://projecthub.arduino.cc/Arduino_Genuino/diy-synth-a794df" target="_blank" rel="noopener">DIY Synth</a>
+      tutorial (GPL3+). Arduino, UNO and Modulino are trademarks of Arduino S.r.l.
+      Progress is saved locally in your browser only.
+    </footer>
+  </main>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
