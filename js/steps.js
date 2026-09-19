@@ -82,8 +82,8 @@ export const STEPS = [
     kicker: '3D-printed instrument',
     approx: true,
     viewer: {
-      show: ['base', 'cover', 'buttonsPad', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'modButtons', 'modKnob', 'modDistance'],
-      highlight: ['base', 'cover', 'buttonsPad', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'modButtons', 'modKnob', 'modDistance'],
+      show: ['base', 'cover', 'buttonsPadBent', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'modButtons', 'modKnob', 'modDistance'],
+      highlight: ['base', 'cover', 'buttonsPadBent', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'modButtons', 'modKnob', 'modDistance'],
       camera: WIDE_CAM,
       explodable: true,
     },
@@ -238,8 +238,19 @@ export const STEPS = [
       show: ['buttonsPad'],
       highlight: ['buttonsPad'],
       camera: BUTTONS_CLOSE_CAM,
+      // Toggle between the flat as-printed part and the same part with all
+      // four spacer ears folded (buttons-pad-bent.stl).
+      variants: [
+        { key: 'buttonsPad', label: 'As printed' },
+        { key: 'buttonsPadBent', label: 'Folded' },
+      ],
+      defaultVariant: 'buttonsPad',
     },
-    alt: 'A close-up of the teal Buttons Pad part on its own, angled to show its four thin, bendable spacer tabs.',
+    alt: 'A close-up of the teal Buttons Pad part on its own, angled to show its four thin, bendable spacer ears with their standoffs.',
+    altVariants: {
+      buttonsPad: 'A close-up of the teal Buttons Pad as printed, flat, with its four spacer ears sticking out past the plate, each with a small standoff and a hole.',
+      buttonsPadBent: 'The teal Buttons Pad with all four spacer ears folded 180 degrees back under the plate, so each ear\'s standoff hangs below the plate directly under one of the plate\'s screw holes.',
+    },
     body: `
       <p>The Button Pad prints with four integrated spacers. Bend all four of them
       <strong>downward along their weak (thin) lines</strong> so they'll clip around the Modulino
@@ -248,6 +259,12 @@ export const STEPS = [
         <div class="callout-title">🗜️ Tip</div>
         A small pair of pliers helps get a clean, controlled bend right on each scored line without
         stressing the rest of the part.
+      </div>
+      <div class="callout tip">
+        <div class="callout-title">🔁 How far to fold</div>
+        In the 3D model, each spacer folds a full <strong>180°</strong> &mdash; back under the plate.
+        Flip the viewer above between <strong>As printed</strong> and <strong>Folded</strong> to see
+        it: the folded standoff lands directly under one of the plate's screw holes.
       </div>
     `,
   },
@@ -259,8 +276,8 @@ export const STEPS = [
     approx: true,
     checklist: ['M3×10 screws'],
     viewer: {
-      show: ['base', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'buttonsPad', 'modButtons'],
-      highlight: ['buttonsPad'],
+      show: ['base', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'buttonsPadBent', 'modButtons'],
+      highlight: ['buttonsPadBent'],
       dim: ['base', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'modButtons'],
       camera: BUTTONS_CAM,
     },
@@ -278,9 +295,9 @@ export const STEPS = [
     approx: true,
     checklist: ['M3×6 screws'],
     viewer: {
-      show: ['base', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'buttonsPad', 'modButtons', 'modKnob', 'modDistance'],
+      show: ['base', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'buttonsPadBent', 'modButtons', 'modKnob', 'modDistance'],
       highlight: ['modKnob', 'modDistance'],
-      dim: ['base', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'buttonsPad', 'modButtons'],
+      dim: ['base', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'buttonsPadBent', 'modButtons'],
       camera: BASE_CAM,
     },
     alt: 'The purple Modulino Knob and red Modulino Distance boards, highlighted, mounted directly on the Base to the left of the Buttons, with everything else faded.',
@@ -298,7 +315,7 @@ export const STEPS = [
     kicker: 'Assembly step 9',
     approx: true,
     viewer: {
-      show: ['base', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'buttonsPad', 'modButtons', 'modKnob', 'modDistance', 'cover'],
+      show: ['base', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'buttonsPadBent', 'modButtons', 'modKnob', 'modDistance', 'cover'],
       highlight: ['cover'],
       dim: ['tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'modButtons', 'modKnob', 'modDistance'],
       camera: TOP_CAM,

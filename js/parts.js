@@ -34,6 +34,17 @@ export const PARTS = {
     color: 0x2f8f8a,
     explodeLift: 25,
   },
+  // Same part with all four spacer ears folded 180 degrees back under the
+  // plate (made from buttons-pad.stl; hinge lines at Y=-27.12 / -52.88,
+  // pivot at the plate underside z=4.58). Same coordinate frame, so it's
+  // still `exact: true`. Used for every assembled scene; the flat original
+  // above is only shown as the "As printed" side of the prep step's toggle.
+  buttonsPadBent: {
+    file: 'models/buttons-pad-bent.stl',
+    exact: true,
+    color: 0x2f8f8a,
+    explodeLift: 25,
+  },
   tiltCross: {
     file: 'models/tilt-cross.stl',
     exact: true,
