@@ -6,6 +6,7 @@
 <title>DIY Synth — Interactive Build Guide</title>
 <meta name="description" content="An interactive, 3D-illustrated build guide for the Arduino DIY Synth: print, wire and play a Modulino-powered drum machine and synthesizer." />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎛️</text></svg>" />
+<script>try{if(localStorage.getItem("diy-synth-guide-theme-v1")==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
 <link rel="stylesheet" href="css/style.css" />
 <script type="importmap">
 {
@@ -17,17 +18,13 @@
 </script>
 </head>
 <body>
-<div id="app" data-project="diy-synth">
+<div id="app" data-layout="immersive">
   <header class="topbar">
     <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open steps menu">☰</button>
     <div class="brand"><span class="dot"></span> DIY Synth</div>
     <div class="subtitle">Interactive build guide · Arduino Project Hub</div>
     <div class="spacer"></div>
-    <div class="layout-switch" id="layoutSwitch" role="group" aria-label="Viewer layout">
-      <button data-layout="split" aria-label="Split layout">⬜ <span class="full">Split</span></button>
-      <button data-layout="hero" aria-label="Hero layout">▭ <span class="full">Hero</span></button>
-      <button data-layout="immersive" aria-label="Immersive layout">◧ <span class="full">Immersive</span></button>
-    </div>
+    <button class="icon-btn theme-btn" id="themeBtn" aria-label="Switch to dark theme" title="Switch to dark theme">&#9790;</button>
   </header>
 
   <nav class="sidebar" id="sidebar"></nav>
@@ -66,8 +63,9 @@
     <footer class="credits">
       Guide content adapted from Arduino's
       <a href="https://projecthub.arduino.cc/Arduino_Genuino/diy-synth-a794df" target="_blank" rel="noopener">DIY Synth</a>
-      tutorial (GPL3+). Arduino, UNO and Modulino are trademarks of Arduino S.r.l.
-      Progress is saved locally in your browser only.
+      tutorial (GPL3+). UNO Q and Modulino reference models from
+      <a href="https://docs.arduino.cc/" target="_blank" rel="noopener">docs.arduino.cc</a>.
+      Arduino, UNO and Modulino are trademarks of Arduino S.r.l. Progress is saved locally in your browser only.
     </footer>
   </main>
 </div>

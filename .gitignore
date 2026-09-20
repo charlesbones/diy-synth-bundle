@@ -1,1 +1,4 @@
 .DS_Store
+*.FCStd
+*.FCBak
+models/complete-project.stl

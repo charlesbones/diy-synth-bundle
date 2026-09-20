@@ -64,19 +64,35 @@ models/              STL geometry (see below)
   `tilt-plane.stl`, `tilt-knob.stl` are the six printable parts, exported
   together from one assembly — their coordinates line up exactly, so they
   mate perfectly in the viewer.
-- `modulino-movement.stl`, `modulino-buttons.stl`, `modulino-knob.stl`,
-  `modulino-distance.stl` are reference models converted from the official
-  STEP files on [docs.arduino.cc](https://docs.arduino.cc/) (each
-  Modulino node's own product page). They come from separate CAD exports,
-  not this kit's assembly, so their position in the viewer is a
-  hand-placed approximation matching the written instructions rather than
-  a precise mate. Steps that use them are flagged with an "approximate 3D
-  placement" badge.
+- `uno-q.stl`, `modulino-movement.stl`, `modulino-buttons.stl`,
+  `modulino-knob.stl`, `modulino-distance.stl` are reference models
+  converted from the official STEP files on
+  [docs.arduino.cc](https://docs.arduino.cc/) (product pages for the UNO Q
+  and each Modulino node). They come from separate CAD exports, not the
+  printed parts' assembly, so they can't mate by coordinates alone. Their
+  positions — and those of every screw — come from a real FreeCAD assembly:
+  each part is imported as a mesh, moved into place with its Placement, and
+  those numbers are copied into `js/parts.js`
+  (`placement: { pos, axis, angle }`, FreeCAD's own convention).
+- `m3x6-flathead-screw.stl` and `m3x10-flathead-screw.stl` are ISO 10642
+  socket countersunk screws (origin at the head's top face, tip pointing
+  down). `js/parts.js` places each size many times with `instances`:
+  M3×6 holds the UNO Q (2), the Knob (2) and the Distance sensor (2, tilted
+  45° with its board); M3×10 fixes the Movement to the Tilt Plane (2), goes
+  through the Button Pad's folded standoffs (2) and closes the Cover (8).
+  These counts are what the CAD assembly contains; the parts list in the
+  overview step is the original tutorial's.
+- `buttons-pad-bent.stl` is `buttons-pad.stl` with all four spacer ears
+  folded 180° back under the plate. Every assembled scene uses it; the prep
+  step has an As printed / Folded toggle.
+- The exploded view stacks every layer of the build (see the comment at the
+  top of `js/parts.js` for the order) and uses its own camera so nothing
+  leaves the frame. The welcome and last steps show it turning slowly.
 - The original tutorial's step 3 mentions screwing "the Knob on the
   Modulino Distance" together as part of building the Tilt module, which
-  reads as inconsistent with steps 8/9 describing them mounting to
-  separate individual spots on the Base — this guide follows 8/9 for where
-  they actually end up, and flags the discrepancy in that step's text.
+  reads as inconsistent with the later steps describing them mounting to
+  separate individual spots on the Base — this guide follows the later steps
+  for where they actually end up, and flags the discrepancy in that step's text.
 
 ## Editing the guide
 
@@ -84,9 +100,10 @@ All step text, checklists, callouts and which parts appear in the viewer
 live in `js/steps.js` as a plain array — no HTML templating system, just
 edit the strings. Each step can optionally include a `viewer` block
 (`show`/`highlight`/`dim` part keys, a camera preset, `explodable`, or
-`variants` for a part-swap toggle) to control the 3D scene, or omit it
+`variants` for a part-swap toggle, `explodedCamera`, `startExploded`,
+`autoRotate`) to control the 3D scene, or omit it
 entirely for a text-only step. 3D placement data (which file, color,
-exact-vs-hand-placed transform) lives separately in `js/parts.js`.
+exact geometry or a FreeCAD `placement`, plus `explodeLift`) lives separately in `js/parts.js`.
 
 ## Cutting a release
 

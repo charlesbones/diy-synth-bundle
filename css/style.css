@@ -26,35 +26,7 @@
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0c1b2b;
-    --panel: #142a40;
-    --panel-alt: #1a344d;
-    --border: #24425f;
-    --text: #e8f1fa;
-    --text-dim: #8fa9c2;
-    --accent: #5aa9ff;
-    --accent-strong: #8cc4ff;
-    --accent-soft: #17385a;
-    --on-accent: #08213a;
-    --spark: #ffd166;
-    --warn-bg: #3a2f10;
-    --warn-border: #a8791f;
-    --warn-text: #f0cd7e;
-    --danger-bg: #3a1c19;
-    --danger-border: #a4453a;
-    --danger-text: #f3a89c;
-    --code-bg: #08131f;
-    --code-text: #e3edf7;
-    --viewer-bg: #0c1b2b;
-    --panel-glass: rgba(20,42,64,0.74);
-    --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
-    --shadow-float: 0 18px 48px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.3);
-    color-scheme: dark;
-  }
-}
-
+/* Light is the default; dark is opt-in via the header toggle (sets data-theme="dark"). */
 :root[data-theme="dark"] {
   --bg: #0c1b2b;
   --panel: #142a40;
@@ -163,34 +135,11 @@ header.topbar .spacer { flex: 1; }
 }
 .icon-btn:hover { border-color: var(--accent); color: var(--accent-strong); }
 
+.theme-btn { font-size: 15px; line-height: 1; }
+
 .menu-btn { display: none; }
 @media (max-width: 880px) {
   .menu-btn { display: flex; }
-}
-
-.layout-switch {
-  display: flex;
-  gap: 2px;
-  background: var(--panel-alt);
-  border: 1px solid var(--border);
-  border-radius: 100px;
-  padding: 2px;
-}
-.layout-switch button {
-  border: none;
-  background: transparent;
-  color: var(--text-dim);
-  font-size: 11.5px;
-  font-weight: 600;
-  padding: 6px 11px;
-  border-radius: 100px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.layout-switch button:hover { color: var(--text); }
-.layout-switch button.active { background: var(--accent); color: var(--on-accent); }
-@media (max-width: 640px) {
-  .layout-switch button span.full { display: none; }
 }
 
 /* ---------- Sidebar ---------- */
@@ -425,11 +374,14 @@ main.content {
 .callout .callout-title { font-weight: 700; margin-bottom: 3px; display: flex; gap: 6px; align-items: center; }
 
 pre.code {
+  max-width: 100%;
   background: var(--code-bg);
   color: var(--code-text);
   padding: 12px 14px;
   border-radius: 8px;
   overflow-x: auto;
+  white-space: pre-wrap;        /* long commands wrap onto more lines instead of being cut off */
+  overflow-wrap: anywhere;
   font-size: 12.8px;
   line-height: 1.55;
   margin: 0 0 16px;
@@ -561,31 +513,10 @@ footer.credits {
 footer.credits a { color: var(--accent-strong); }
 
 /* =====================================================================
-   Layout variants -- "Split" (default, rules above) / "Hero" / "Immersive"
-   Same DOM throughout; these rules just reposition it. Chosen in the
-   header's layout-switch control and remembered per-browser.
+   Layout -- the guide is Immersive-only: a full-bleed 3D scene behind a
+   floating glass card. (The base rules above are the old Split layout,
+   kept only as the fallback that these rules override.)
    ===================================================================== */
-
-/* ---------- Hero: big top banner, text below ---------- */
-#app[data-layout="hero"] .layout-with-viewer {
-  grid-template-columns: 1fr;
-}
-#app[data-layout="hero"] .viewer-col {
-  order: -1;
-  position: static;
-}
-#app[data-layout="hero"] .viewer-box {
-  aspect-ratio: auto;
-  height: 54vh;
-}
-#app[data-layout="hero"] .viewer-toolbar,
-#app[data-layout="hero"] .legend {
-  justify-content: center;
-}
-#app[data-layout="hero"] .legend { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 16px; }
-@media (max-width: 700px) {
-  #app[data-layout="hero"] .viewer-box { height: 42vh; }
-}
 
 /* ---------- Immersive: full-bleed 3D behind a floating glass card ---------- */
 #app[data-layout="immersive"] header.topbar {
@@ -596,7 +527,7 @@ footer.credits a { color: var(--accent-strong); }
   border-bottom-color: transparent;
 }
 #app[data-layout="immersive"] .layout-with-viewer {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);   /* minmax(0,..) so a long code line scrolls instead of widening the card */
   position: relative;
 }
 #app[data-layout="immersive"] .viewer-col {
@@ -699,13 +630,34 @@ footer.credits a { color: var(--accent-strong); }
 #app[data-layout="immersive"] .step-header h1 { font-size: 21px; margin-bottom: 10px; }
 #app[data-layout="immersive"] .prose { font-size: 14.5px; }
 
-/* Sidebar becomes an on-demand drawer (like mobile) in Hero/Immersive at any
-   viewport width, since the 3D view is meant to dominate the screen. */
-#app[data-layout="hero"] .menu-btn,
+/* Text-only steps (no 3D): there's nothing behind the card, so centre it
+   as a comfortable reading column instead of leaving it stranded on the right. */
+#app[data-layout="immersive"].no-viewer main.content {
+  max-width: 680px;                   /* a comfortable line length */
+  margin: 12px auto 16px;
+  padding: 28px 36px 36px;
+  /* the card follows the text: it hugs short steps, grows with longer ones,
+     and only scrolls inside once it reaches the screen height */
+  height: auto;
+  max-height: calc(100% - 28px);
+  align-self: center;                 /* and sits in the middle of the screen */
+}
+#app[data-layout="immersive"].no-viewer .prose { font-size: 15.5px; }
+#app[data-layout="immersive"].no-viewer .step-header h1 { font-size: 26px; }
+@media (max-width: 820px) {
+  #app[data-layout="immersive"].no-viewer main.content {
+    margin: 10px;
+    align-self: center;
+    max-height: calc(100% - 20px);
+    padding: 18px 18px 26px;
+  }
+}
+
+/* Sidebar is an on-demand drawer (like mobile) at any viewport width, since
+   the 3D view is meant to dominate the screen. */
 #app[data-layout="immersive"] .menu-btn {
   display: flex;
 }
-#app[data-layout="hero"],
 #app[data-layout="immersive"] {
   /* single-column shell: default areas ("header header"/"sidebar main") need
      2 columns, and leaving that mismatched against a 1-column track list
@@ -713,7 +665,6 @@ footer.credits a { color: var(--accent-strong); }
   grid-template-columns: 1fr;
   grid-template-areas: "header" "main";
 }
-#app[data-layout="hero"] nav.sidebar,
 #app[data-layout="immersive"] nav.sidebar {
   position: fixed;
   top: 55px; bottom: 0; left: 0;
@@ -723,7 +674,6 @@ footer.credits a { color: var(--accent-strong); }
   transition: transform .2s ease;
   z-index: 31;
 }
-#app[data-layout="hero"] nav.sidebar.open,
 #app[data-layout="immersive"] nav.sidebar.open {
   transform: translateX(0);
 }

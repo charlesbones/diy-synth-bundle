@@ -103,6 +103,9 @@ export class AssemblyViewer {
     this.controls.dampingFactor = 0.08;
     this.controls.minDistance = 40;
     this.controls.maxDistance = 900;
+    this.controls.autoRotateSpeed = 1.2;
+    // a slow turntable (cover step) stops for good the moment someone grabs the model
+    this.controls.addEventListener('start', () => { this.controls.autoRotate = false; });
     this.controls.update();
 
     this.hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1.15);
@@ -212,6 +215,7 @@ export class AssemblyViewer {
    *   highlight: ['unoQ'],         // parts to emphasize (full opacity + outline tint)
    *   dim: ['base'],               // parts shown faded (already-placed context)
    *   camera: {pos:[x,y,z], target:[x,y,z]} // optional camera preset
+   *   autoRotate: true             // optional slow turntable until the user drags
    * }
    */
   async applyStep(config) {
@@ -242,6 +246,8 @@ export class AssemblyViewer {
     }
 
     this.setCamera(config.camera);
+    const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.controls.autoRotate = !!config.autoRotate && !calm;
   }
 
   /** Move the camera to a {pos, target} preset (no-op when omitted). */

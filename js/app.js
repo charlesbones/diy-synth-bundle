@@ -3,7 +3,7 @@ import { PHASES, STEPS } from './steps.js';
 import { PARTS } from './parts.js';
 
 const STORAGE_KEY = 'diy-synth-guide-progress-v1';
-const LAYOUT_KEY = 'diy-synth-guide-layout-v1';
+const THEME_KEY = 'diy-synth-guide-theme-v1';
 
 const state = {
   index: 0,
@@ -36,7 +36,6 @@ function saveProgress() {
 
 const els = {
   app: document.getElementById('app'),
-  layoutSwitch: document.getElementById('layoutSwitch'),
   sidebar: document.getElementById('sidebar'),
   progressFill: document.getElementById('progressFill'),
   progressLabel: document.getElementById('progressLabel'),
@@ -56,9 +55,44 @@ const els = {
   doneToggle: document.getElementById('doneToggle'),
   menuBtn: document.getElementById('menuBtn'),
   overlay: document.getElementById('overlay'),
+  themeBtn: document.getElementById('themeBtn'),
 };
 
 let viewer = null;
+
+// Light is the default; the header button toggles dark and remembers the choice.
+function currentTheme() {
+  return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+}
+
+function applyTheme(name, persist) {
+  document.documentElement.dataset.theme = name;
+  if (els.themeBtn) {
+    const dark = name === 'dark';
+    els.themeBtn.textContent = dark ? '\u2600' : '\u263E';
+    els.themeBtn.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+    els.themeBtn.title = dark ? 'Switch to light theme' : 'Switch to dark theme';
+  }
+  if (persist) {
+    try {
+      localStorage.setItem(THEME_KEY, name);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+  // the 3D scene's background is read from CSS once, so re-sync it
+  if (viewer) {
+    viewer.setBackground(getComputedStyle(document.documentElement).getPropertyValue('--viewer-bg').trim());
+  }
+}
+
+function loadTheme() {
+  try {
+    return localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light';
+  } catch (e) {
+    return 'light';
+  }
+}
 
 function ensureViewer() {
   if (!viewer) viewer = new AssemblyViewer(els.viewerCanvas, PARTS);
@@ -260,6 +294,7 @@ async function applyStepToViewer(step) {
     highlight: resolveShow(step, cfg.highlight || []),
     dim: resolveShow(step, cfg.dim || []),
     camera: cfg.camera,
+    autoRotate: cfg.autoRotate,
   });
   const exploded = cfg.explodable ? !!state.exploded[step.id] : false;
   v.setExplode(exploded);
@@ -286,6 +321,10 @@ function renderStep() {
   const isDone = state.done.has(step.id);
   els.doneToggle.classList.toggle('done', isDone);
   els.doneToggle.innerHTML = isDone ? '✓ Marked complete' : 'Mark step complete';
+
+  els.app.classList.toggle('no-viewer', !step.viewer); // lets CSS centre the immersive card
+  // a step can open already exploded (the cover step does)
+  if (step.viewer && step.viewer.startExploded && !(step.id in state.exploded)) state.exploded[step.id] = true;
 
   if (step.viewer) {
     els.layout.classList.remove('no-viewer');
@@ -338,43 +377,18 @@ function toggleDone() {
   renderStep();
 }
 
-function setLayout(name) {
-  const prevLayout = els.app.dataset.layout;
-  // .viewer-col is normally nested inside main.content, which is fine for
-  // split/hero. In immersive mode it needs position:fixed to cover the
-  // whole viewport -- but main.content gets a `backdrop-filter` for its
-  // glass-card look, and a `filter`/`backdrop-filter` ancestor becomes the
-  // containing block for fixed descendants (same rule as `transform`), so
-  // the "full-screen" viewer would actually be sized relative to that small
-  // card instead of the viewport. Reparent it up to #app itself while
-  // immersive is active, and put it back afterwards. Moving a canvas like
-  // this preserves its live WebGL context.
-  if (name === 'immersive' && prevLayout !== 'immersive') {
-    els.app.appendChild(els.viewerCol);
-  } else if (name !== 'immersive' && prevLayout === 'immersive') {
-    els.layout.appendChild(els.viewerCol);
-  }
-
-  els.app.dataset.layout = name;
-  for (const btn of els.layoutSwitch.querySelectorAll('button')) {
-    btn.classList.toggle('active', btn.dataset.layout === name);
-  }
-  try {
-    localStorage.setItem(LAYOUT_KEY, name);
-  } catch (e) {
-    /* ignore */
-  }
+function initLayout() {
+  // The viewer is position:fixed to cover the whole viewport, but
+  // main.content gets a `backdrop-filter` for its glass-card look, and a
+  // `filter`/`backdrop-filter` ancestor becomes the containing block for
+  // fixed descendants (same rule as `transform`), so the "full-screen"
+  // viewer would be sized relative to that small card instead of the
+  // viewport. Hang it directly off #app instead.
+  els.app.dataset.layout = 'immersive';
+  els.app.appendChild(els.viewerCol);
   closeMobileSidebar();
   // canvas dimensions depend on the new CSS, so re-measure once it's applied
   requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
-}
-
-function loadLayout() {
-  try {
-    return localStorage.getItem(LAYOUT_KEY) || 'immersive';
-  } catch (e) {
-    return 'immersive';
-  }
 }
 
 function closeMobileSidebar() {
@@ -399,9 +413,7 @@ function bindEvents() {
     els.overlay.classList.add('open');
   });
   els.overlay.addEventListener('click', closeMobileSidebar);
-  for (const btn of els.layoutSwitch.querySelectorAll('button')) {
-    btn.addEventListener('click', () => setLayout(btn.dataset.layout));
-  }
+  if (els.themeBtn) els.themeBtn.addEventListener('click', () => applyTheme(currentTheme() === 'dark' ? 'light' : 'dark', true));
   window.addEventListener('keydown', (e) => {
     if (e.target && ['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
     if (e.key === 'ArrowRight') goTo(state.index + 1);
@@ -413,7 +425,8 @@ function main() {
   loadProgress();
   initFromHash();
   bindEvents();
-  setLayout(loadLayout());
+  applyTheme(loadTheme(), false);
+  initLayout();
   renderStep();
 }
 

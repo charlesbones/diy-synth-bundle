@@ -12,16 +12,58 @@ export const PHASES = [
 ];
 
 const WIDE_CAM = { pos: [260, -320, 260], target: [-3, -13, 10] };
-const EXPLODED_CAM = { pos: [300, -390, 310], target: [-3, -13, 38] };
+const EXPLODED_CAM = { pos: [340, -470, 350], target: [-3, -13, 75] };
 const BASE_CAM = { pos: [180, -230, 190], target: [-3, -13, 8] };
 const TILT_CAM = { pos: [150, -160, 160], target: [53, -27, 15] };
 const TILT_CLOSE_CAM = { pos: [90, -100, 110], target: [53, -27, 20] };
 const BUTTONS_CAM = { pos: [140, -190, 150], target: [10, -40, 12] };
-const BUTTONS_CLOSE_CAM = { pos: [70, -90, 90], target: [10, -40, 10] };
 const TOP_CAM = { pos: [0, -13, 340], target: [-3, -13, 8] };
+
+// the whole instrument: printed parts, boards and every screw
+const OVERVIEW_PARTS = ['base', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'screwsTilt', 'unoQ', 'screwsUnoQ', 'modButtons', 'buttonsPadBent', 'screwsPad', 'modKnob', 'screwsKnob', 'modDistance', 'screwsDistance', 'cover', 'screwsCover'];
+// what's already built after each stage (the later steps show these faded)
+const UNO_PARTS = ['unoQ', 'screwsUnoQ'];
+const TILT_PARTS = ['tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'screwsTilt'];
+const BUTTONS_PARTS = ['modButtons', 'buttonsPadBent', 'screwsPad'];
+const KNOB_DIST_PARTS = ['modKnob', 'screwsKnob', 'modDistance', 'screwsDistance'];
 
 export const STEPS = [
   // ---------------------------------------------------------------- ready --
+  {
+    id: 'intro',
+    phase: 'ready',
+    title: 'DIY Synth',
+    kicker: 'Welcome',
+    approx: false,
+    viewer: {
+      show: OVERVIEW_PARTS,
+      highlight: OVERVIEW_PARTS,
+      camera: WIDE_CAM,
+      explodedCamera: EXPLODED_CAM,
+      explodable: true,
+      startExploded: true, // open as an exploded diagram of the whole build...
+      autoRotate: true,    // ...slowly turning until you grab it
+    },
+    alt: 'The complete DIY Synth instrument shown exploded and slowly turning: the Base at the bottom, the Tilt module, the UNO Q and the four Modulino boards above it, then the Button Pad, and the Cover on top, each layer with its screws. Use the Assembled/Exploded toggle above the viewer to close it up.',
+    body: `
+      <p style="font-size:1.12em;line-height:1.55;">Print it, wire it and play it: a Modulino-powered drum machine and synthesizer that you tilt, twist and tap.
+      This guide walks you through the whole build, one step at a time, with a 3D model that follows along.</p>
+      <div class="card-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="mini-card"><span class="qty">6</span><span class="label">printed parts</span></div>
+        <div class="mini-card"><span class="qty">4</span><span class="label">Modulino modules</span></div>
+        <div class="mini-card"><span class="qty">1</span><span class="label">Arduino UNO Q</span></div>
+      </div>
+      <p>That's the whole instrument, pulled apart layer by layer: Base, Tilt module and electronics, Button Pad, then the Cover
+      on top. Drag to turn it, and use <strong>Assembled</strong> / <strong>Exploded</strong> above the model to close it up or pull it apart.</p>
+      <h3 style="margin:18px 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim)">How the guide goes</h3>
+      <ol>
+        <li><strong>Get ready:</strong> set up your workstation and import the project.</li>
+        <li><strong>Build the instrument:</strong> print, assemble and close the case.</li>
+        <li><strong>Bring it to life:</strong> run the software and play.</li>
+      </ol>
+      <p>Use <strong>Next</strong> below, or the left and right arrow keys, to move through the steps.</p>
+    `,
+  },
   {
     id: 'workstation',
     phase: 'ready',
@@ -81,15 +123,15 @@ export const STEPS = [
     phase: 'build',
     title: "What you'll need",
     kicker: '3D-printed instrument',
-    approx: true,
+    approx: false,
     viewer: {
-      show: ['base', 'cover', 'buttonsPadBent', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'modButtons', 'modKnob', 'modDistance'],
-      highlight: ['base', 'cover', 'buttonsPadBent', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'modButtons', 'modKnob', 'modDistance'],
+      show: OVERVIEW_PARTS,
+      highlight: OVERVIEW_PARTS,
       camera: WIDE_CAM,
       explodedCamera: EXPLODED_CAM,
       explodable: true,
     },
-    alt: 'The six printed instrument parts and four Modulino nodes — Base, Cover, Buttons Pad, Tilt Cross, Tilt Plane, Tilt Knob, Movement, Buttons, Knob and Distance — shown together at an angle. Use the Assembled/Exploded toggle above the viewer to space them apart and see how they stack.',
+    alt: 'The complete DIY Synth instrument — Base, Cover, Buttons Pad and the three Tilt parts around the UNO Q and the Modulino Movement, Buttons, Knob and Distance boards, held together with M3 screws — shown closed at an angle. Use the Assembled/Exploded toggle above the viewer to pull every layer apart.',
     body: `
       <p>The instrument body is six printed parts around four optional Modulino nodes. Here's
       everything the official build calls for.</p>
@@ -127,7 +169,7 @@ export const STEPS = [
         assemble it with the flat side facing downward, as in the steps below.
       </div>
       <p>Use the toggle above the viewer to see the instrument exploded or drag to orbit and get a feel
-      for how the six parts relate to each other before you start printing.</p>
+      for how everything fits together before you start printing.</p>
     `,
   },
   {
@@ -135,14 +177,13 @@ export const STEPS = [
     phase: 'build',
     title: 'Wire the Modulino chain',
     kicker: 'Assembly step 1',
-    approx: true,
     checklist: ['5× 5 cm Qwiic cables'],
     viewer: {
-      show: ['modMovement', 'modButtons', 'modKnob', 'modDistance'],
-      highlight: ['modMovement', 'modButtons', 'modKnob', 'modDistance'],
+      show: ['unoQ', 'modMovement', 'modButtons', 'modKnob', 'modDistance'],
+      highlight: ['unoQ', 'modMovement', 'modButtons', 'modKnob', 'modDistance'],
       camera: BASE_CAM,
     },
-    alt: 'Four Modulino boards — Movement, Buttons, Knob and Distance — all highlighted, shown at their eventual resting spots but not yet connected to anything, in the order they get cabled together.',
+    alt: 'The UNO Q and four Modulino boards — Movement, Buttons, Knob and Distance — all highlighted, shown at their eventual resting spots but not yet connected to anything, in the order they get cabled together.',
     body: `
       <p>Before anything gets screwed down, connect the UNO Q and the four Modulino nodes with Qwiic
       cables <strong>in this exact order</strong>:</p>
@@ -154,17 +195,34 @@ export const STEPS = [
     `,
   },
   {
+    id: 'mount-unoq',
+    phase: 'build',
+    title: 'Mount the UNO Q',
+    kicker: 'Assembly step 2',
+    checklist: ['2× M3×6 flathead screws'],
+    viewer: {
+      show: ['base', ...UNO_PARTS],
+      highlight: UNO_PARTS,
+      dim: ['base'],
+      camera: BASE_CAM,
+    },
+    alt: 'The UNO Q board, highlighted, in the middle of the grey plastic Base, held down by two steel M3x6 screws; the Base is faded to show it is already in place.',
+    body: `
+      <p>Screw the UNO Q to the <strong>center of the Base</strong> using 2 M3×6 flathead screws.</p>
+    `,
+  },
+  {
     id: 'press-tilt-cross',
     phase: 'build',
     title: 'Press the Tilt Cross into the Base',
-    kicker: 'Assembly step 2',
+    kicker: 'Assembly step 3',
     viewer: {
-      show: ['base', 'tiltCross'],
+      show: ['base', ...UNO_PARTS, 'tiltCross'],
       highlight: ['tiltCross'],
-      dim: ['base'],
+      dim: ['base', ...UNO_PARTS],
       camera: TILT_CAM,
     },
-    alt: 'The orange Tilt Cross, highlighted, pressed into a round joint on the right side of the grey Base, which is faded to show it is already in place.',
+    alt: 'The orange Tilt Cross, highlighted, pressed into a round joint on the right side of the grey Base, which is faded to show it is already in place, next to the faded UNO Q.',
     body: `
       <p>Gently press the Tilt Cross into the joint on the right side of the Base until it clicks into place.
       If you printed it with a flat face (from the <code class="inline">.3mf</code>), face that flat side <strong>downward</strong>.</p>
@@ -174,23 +232,22 @@ export const STEPS = [
     id: 'build-tilt-module',
     phase: 'build',
     title: 'Build the Tilt module',
-    kicker: 'Assembly step 3',
-    approx: true,
-    checklist: ['2× M3×10 screws'],
+    kicker: 'Assembly step 4',
+    checklist: ['2× M3×10 flathead screws'],
     viewer: {
-      show: ['tiltPlane', 'tiltKnob', 'modMovement'],
-      highlight: ['tiltPlane', 'tiltKnob', 'modMovement'],
+      show: ['tiltPlane', 'tiltKnob', 'modMovement', 'screwsTilt'],
+      highlight: ['tiltPlane', 'tiltKnob', 'modMovement', 'screwsTilt'],
       camera: TILT_CLOSE_CAM,
     },
-    alt: 'A close-up of the blue Tilt Plane with the green Modulino Movement board on top of it and the purple Tilt Knob bracket stacked beside it, shown on their own.',
+    alt: 'A close-up of the blue Tilt Plane with the green Modulino Movement board screwed on top of it by two M3x10 screws and the purple Tilt Knob bracket stacked beside it, shown on their own.',
     body: `
       <p>Place the Modulino Movement on the Tilt Plane and screw it down with 2 M3×10 screws.</p>
       <div class="callout warn">
         <div class="callout-title">⚠️ About "the Knob on the Distance"</div>
         The original tutorial's wording for this step also mentions screwing "the Knob on the
-        Modulino Distance" together here &mdash; but later steps (8 and 9) separately describe
+        Modulino Distance" together here &mdash; but later steps separately describe
         screwing the Knob and the Distance sensor into their own individual spots on the Base, next
-        to the Buttons. This guide follows steps 8/9 for where those two actually end up; the
+        to the Buttons. This guide follows those later steps for where the two actually end up; the
         sentence here most likely just means they get prepped as a small stacked pair before that.
       </div>
     `,
@@ -199,15 +256,14 @@ export const STEPS = [
     id: 'route-cables',
     phase: 'build',
     title: "Route the Distance sensor's cables",
-    kicker: 'Assembly step 4',
-    approx: true,
+    kicker: 'Assembly step 5',
     viewer: {
-      show: ['tiltPlane', 'tiltKnob', 'modMovement'],
+      show: ['tiltPlane', 'tiltKnob', 'modMovement', 'screwsTilt'],
       highlight: ['tiltPlane'],
-      dim: ['tiltKnob', 'modMovement'],
+      dim: ['tiltKnob', 'modMovement', 'screwsTilt'],
       camera: TILT_CLOSE_CAM,
     },
-    alt: 'A close-up of the blue Tilt Plane, highlighted, with the Tilt Knob bracket and the Modulino Movement board both faded, showing the small hooks underneath the plane where cables get routed.',
+    alt: 'A close-up of the blue Tilt Plane, highlighted, with the Tilt Knob bracket, the Modulino Movement board and its screws all faded, showing the small hooks underneath the plane where cables get routed.',
     body: `
       <p>Pass the cables in and out of the Modulino Distance sensor around the small hooks underneath
       the Tilt Plane, so they stay tidy once everything is assembled.</p>
@@ -217,12 +273,11 @@ export const STEPS = [
     id: 'snap-tilt-in',
     phase: 'build',
     title: 'Snap the Tilt module into the Base',
-    kicker: 'Assembly step 5',
-    approx: true,
+    kicker: 'Assembly step 6',
     viewer: {
-      show: ['base', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement'],
+      show: ['base', ...UNO_PARTS, ...TILT_PARTS],
       highlight: ['tiltPlane', 'tiltKnob'],
-      dim: ['base', 'tiltCross', 'modMovement'],
+      dim: ['base', ...UNO_PARTS, 'tiltCross', 'modMovement', 'screwsTilt'],
       camera: TILT_CAM,
     },
     alt: 'The assembled Tilt Plane and Tilt Knob, highlighted, pressed onto the Tilt Cross on the Base, which are both faded to show they are already in place, along with the Modulino Movement board riding along on the Tilt Plane.',
@@ -232,10 +287,39 @@ export const STEPS = [
     `,
   },
   {
+    id: 'mount-buttons',
+    phase: 'build',
+    title: 'Place the Modulino Buttons',
+    kicker: 'Assembly step 7',
+    viewer: {
+      show: ['base', ...UNO_PARTS, ...TILT_PARTS, 'modButtons'],
+      highlight: ['modButtons'],
+      dim: ['base', ...UNO_PARTS, ...TILT_PARTS],
+      camera: BUTTONS_CAM,
+    },
+    alt: 'The amber Modulino Buttons board, highlighted, resting on its seat in the front of the Base, just right of the middle and next to the UNO Q, with the Base, the UNO Q and the Tilt module faded.',
+    body: `
+      <p>Set the Modulino Buttons board on its seat at the <strong>front of the Base</strong>, right next
+      to the UNO Q, <strong>with the three buttons facing up</strong>. It has no screws of its own: the
+      Button Pad you attach in two steps' time clamps it down.</p>
+      <div class="callout tip">
+        <div class="callout-title">🥁 What the three buttons do</div>
+        Once the instrument is running, they switch the drum machine's channels on and off:
+        <strong>button 1 = kick</strong>, <strong>button 2 = snare</strong>, <strong>button 3 = hi-hat</strong>.
+        See <em>Play the instrument</em> for the full list of controls.
+      </div>
+      <div class="callout tip">
+        <div class="callout-title">🔌 Check the cable</div>
+        The Buttons sit in the middle of the Qwiic chain (Movement → <strong>Buttons</strong> → Knob), so make sure
+        both of its cables are still plugged in before you move on.
+      </div>
+    `,
+  },
+  {
     id: 'prep-buttonpad',
     phase: 'build',
     title: 'Prep the Button Pad',
-    kicker: 'Assembly step 6',
+    kicker: 'Assembly step 8',
     viewer: {
       show: ['buttonsPad'],
       highlight: ['buttonsPad'],
@@ -249,25 +333,25 @@ export const STEPS = [
       ],
       defaultVariant: 'buttonsPad',
     },
-    alt: 'A close-up of the teal Buttons Pad part on its own, angled to show its four thin, bendable spacer ears with their standoffs.',
+    alt: 'A close-up of the teal Buttons Pad part on its own, angled to show its four thin, foldable spacer ears with their standoffs.',
     altVariants: {
       buttonsPad: 'A close-up of the teal Buttons Pad as printed, flat, with its four spacer ears sticking out past the plate, each with a small standoff and a hole.',
       buttonsPadBent: 'The teal Buttons Pad with all four spacer ears folded 180 degrees back under the plate, so each ear\'s standoff hangs below the plate directly under one of the plate\'s screw holes.',
     },
     body: `
-      <p>The Button Pad prints with four integrated spacers. Bend all four of them
-      <strong>downward along their weak (thin) lines</strong> so they'll clip around the Modulino
-      Buttons module in the next step.</p>
+      <p>The Button Pad prints with four integrated spacers. <strong>Fold all four of them back under
+      the pad along their weak (thin) lines</strong>, so their standoffs sit under the plate for the
+      screws in the next step.</p>
       <div class="callout tip">
         <div class="callout-title">🗜️ Tip</div>
-        A small pair of pliers helps get a clean, controlled bend right on each scored line without
+        A small pair of pliers helps get a clean, controlled fold right on each scored line without
         stressing the rest of the part.
       </div>
       <div class="callout tip">
         <div class="callout-title">📍 Where the standoffs end up</div>
         Fold each spacer a full <strong>180°</strong> back under the plate. Its small standoff then
-        hangs <strong>below the plate, directly under one of its four screw holes</strong>
-        &mdash; that's where the M3×10 screw goes down through the plate and into the standoff.
+        hangs <strong>below the plate, directly under one of its screw holes</strong>
+        &mdash; that's where an M3×10 screw goes down through the plate and into the standoff.
         Flip the viewer between <strong>As printed</strong> and <strong>Folded</strong> to see it.
       </div>
     `,
@@ -276,19 +360,18 @@ export const STEPS = [
     id: 'attach-buttonpad',
     phase: 'build',
     title: 'Attach the Button Pad',
-    kicker: 'Assembly step 7',
-    approx: true,
-    checklist: ['M3×10 screws'],
+    kicker: 'Assembly step 9',
+    checklist: ['2× M3×10 flathead screws'],
     viewer: {
-      show: ['base', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'buttonsPadBent', 'modButtons'],
-      highlight: ['buttonsPadBent'],
-      dim: ['base', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'modButtons'],
+      show: ['base', ...UNO_PARTS, ...TILT_PARTS, ...BUTTONS_PARTS],
+      highlight: ['buttonsPadBent', 'screwsPad'],
+      dim: ['base', ...UNO_PARTS, ...TILT_PARTS, 'modButtons'],
       camera: BUTTONS_CAM,
     },
-    alt: 'The teal Buttons Pad, highlighted, fitted over the amber Modulino Buttons board on the Base next to the Tilt module, with everything else faded.',
+    alt: 'The teal Buttons Pad, highlighted, fitted over the amber Modulino Buttons board at the front of the Base next to the Tilt module, screwed down by two M3x10 screws through its folded spacers, with everything else faded.',
     body: `
-      <p>Place the Button Pad over the Modulino Buttons, then screw them both down together in the
-      spot next to the Tilt module, using M3×10 screws.</p>
+      <p>Place the Button Pad over the Modulino Buttons, then screw them both down together
+      using 2 M3×10 screws through the folded spacers.</p>
       <div class="callout tip">
         <div class="callout-title">🔩 Through the standoffs</div>
         Each M3×10 screw goes down through a hole in the plate <strong>and through the standoff hanging
@@ -300,19 +383,18 @@ export const STEPS = [
     id: 'mount-knob-distance',
     phase: 'build',
     title: 'Mount the Knob and Distance sensor',
-    kicker: 'Assembly step 8',
-    approx: true,
-    checklist: ['M3×6 screws'],
+    kicker: 'Assembly step 10',
+    checklist: ['4× M3×6 flathead screws'],
     viewer: {
-      show: ['base', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'buttonsPadBent', 'modButtons', 'modKnob', 'modDistance'],
-      highlight: ['modKnob', 'modDistance'],
-      dim: ['base', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'buttonsPadBent', 'modButtons'],
+      show: ['base', ...UNO_PARTS, ...TILT_PARTS, ...BUTTONS_PARTS, ...KNOB_DIST_PARTS],
+      highlight: KNOB_DIST_PARTS,
+      dim: ['base', ...UNO_PARTS, ...TILT_PARTS, ...BUTTONS_PARTS],
       camera: BASE_CAM,
     },
-    alt: 'The purple Modulino Knob and red Modulino Distance boards, highlighted, mounted directly on the Base to the left of the Buttons, with everything else faded.',
+    alt: 'The purple Modulino Knob and red Modulino Distance boards, highlighted, mounted directly on the Base to the left of the Buttons, each held by two M3x6 screws, with everything else faded.',
     body: `
-      <p>Screw the Modulino Knob into the spot right next to the Buttons, on the left. Then screw the
-      Modulino Distance sensor into the sloped seat further to the left.</p>
+      <p>Screw the Modulino Knob into the spot right next to the Buttons, on the left, with 2 M3×6 screws.
+      Then screw the Modulino Distance sensor into the sloped seat further to the left, with 2 more M3×6 screws.</p>
       <p>Neither of these has its own printed bracket &mdash; they mount straight onto molded seats in
       the Base itself.</p>
     `,
@@ -321,17 +403,17 @@ export const STEPS = [
     id: 'close-case',
     phase: 'build',
     title: 'Close the case',
-    kicker: 'Assembly step 9',
-    approx: true,
+    kicker: 'Assembly step 11',
+    checklist: ['8× M3×10 flathead screws'],
     viewer: {
-      show: ['base', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'buttonsPadBent', 'modButtons', 'modKnob', 'modDistance', 'cover'],
-      highlight: ['cover'],
-      dim: ['tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'modButtons', 'modKnob', 'modDistance'],
+      show: [...OVERVIEW_PARTS],
+      highlight: ['cover', 'screwsCover'],
+      dim: ['base', ...UNO_PARTS, ...TILT_PARTS, ...BUTTONS_PARTS, ...KNOB_DIST_PARTS],
       camera: TOP_CAM,
     },
-    alt: 'A top-down view of the highlighted Cover fitted onto the Base, with the Tilt module, Buttons and all four Modulino nodes faded underneath, and the Buttons Pad poking through a cutout.',
+    alt: 'A top-down view of the highlighted Cover fitted onto the Base with eight M3x10 screws around its edge, with the UNO Q, Tilt module, Buttons and all four Modulino nodes faded underneath, and the Buttons Pad and the top of the Tilt Knob poking through cutouts.',
     body: `
-      <p>Screw the Cover onto the Base. The Button Pad and the top of the Tilt Knob poke up through
+      <p>Screw the Cover onto the Base with 8 M3×10 screws. The Button Pad and the top of the Tilt Knob poke up through
       cutouts in the Cover, so they stay usable while everything else is sealed underneath.</p>
       <p style="text-align:center;font-size:22px;margin-top:22px;">🎉 <strong>The instrument is built!</strong></p>
     `,
@@ -507,6 +589,27 @@ sudo apt-get install -y pipewire pipewire-jack pipewire-audio-client-libraries w
         <a href="https://projecthub.arduino.cc/Arduino_Genuino/diy-synth-a794df" target="_blank" rel="noopener">DIY Synth</a>
         tutorial.
       </div>
+    `,
+  },
+  {
+    id: 'finish',
+    phase: 'software',
+    title: 'Have fun!',
+    kicker: 'Done',
+    viewer: {
+      show: OVERVIEW_PARTS,
+      highlight: OVERVIEW_PARTS,
+      camera: WIDE_CAM,
+      explodedCamera: EXPLODED_CAM,
+      explodable: true,
+      autoRotate: true, // same slow turntable as the welcome step
+    },
+    alt: 'The finished DIY Synth instrument, fully assembled, slowly turning. Use the Assembled/Exploded toggle above the viewer to pull it apart layer by layer.',
+    body: `
+      <p style="text-align:center;font-size:40px;margin:6px 0;">🎛️</p>
+      <p style="text-align:center;font-size:18px;font-weight:700;">Your DIY Synth is ready.</p>
+      <p>Tilt it, twist the knob, wave a hand over the distance sensor and tap the buttons &mdash; an instrument
+      built and configured entirely by you.</p>
     `,
   },
 ];
