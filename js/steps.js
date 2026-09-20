@@ -237,7 +237,8 @@ export const STEPS = [
     viewer: {
       show: ['buttonsPad'],
       highlight: ['buttonsPad'],
-      camera: BUTTONS_CLOSE_CAM,
+      // low, side-on angle so the folded standoffs hanging under the plate are visible
+      camera: { pos: [52, -88, 18], target: [10.5, -40, 7] },
       // Toggle between the flat as-printed part and the same part with all
       // four spacer ears folded (buttons-pad-bent.stl).
       variants: [
@@ -261,10 +262,11 @@ export const STEPS = [
         stressing the rest of the part.
       </div>
       <div class="callout tip">
-        <div class="callout-title">🔁 How far to fold</div>
-        In the 3D model, each spacer folds a full <strong>180°</strong> &mdash; back under the plate.
-        Flip the viewer above between <strong>As printed</strong> and <strong>Folded</strong> to see
-        it: the folded standoff lands directly under one of the plate's screw holes.
+        <div class="callout-title">📍 Where the standoffs end up</div>
+        Fold each spacer a full <strong>180°</strong> back under the plate. Its small standoff then
+        hangs <strong>below the plate, directly under one of its four screw holes</strong>
+        &mdash; that's where the M3×10 screw goes down through the plate and into the standoff.
+        Flip the viewer between <strong>As printed</strong> and <strong>Folded</strong> to see it.
       </div>
     `,
   },
@@ -285,6 +287,11 @@ export const STEPS = [
     body: `
       <p>Place the Button Pad over the Modulino Buttons, then screw them both down together in the
       spot next to the Tilt module, using M3×10 screws.</p>
+      <div class="callout tip">
+        <div class="callout-title">🔩 Through the standoffs</div>
+        Each M3×10 screw goes down through a hole in the plate <strong>and through the standoff hanging
+        underneath it</strong> &mdash; that's why the spacers are folded first.
+      </div>
     `,
   },
   {
