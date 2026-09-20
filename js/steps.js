@@ -503,11 +503,11 @@ sudo apt-get install -y pipewire pipewire-jack pipewire-audio-client-libraries w
       the launcher automatically picks up the first already-connected Bluetooth device.</p>
       <ol>
         <li>Make sure the speaker is powered on and in pairing mode.</li>
-        <li>Click the Bluetooth icon in the system tray (bottom-right of the screen).</li>
+        <li>Click the Bluetooth icon in the system tray (bottom-right of the screen).<figure class="shot"><img src="media/bluetooth-tray.jpg" alt="The App Lab window with an arrow pointing at the Bluetooth icon in the system tray at the top right of the screen." loading="lazy"><figcaption>The Bluetooth icon in the system tray.</figcaption></figure></li>
         <li>Choose <strong>Devices</strong> (or <strong>Connect new device</strong>).</li>
-        <li>Click <strong>Search</strong> (or <strong>Scan</strong>) to discover nearby devices.</li>
+        <li>Click <strong>Search</strong> (or <strong>Scan</strong>) to discover nearby devices.<figure class="shot"><img src="media/bluetooth-devices.png" alt="The Bluetooth Devices window with its Search button and an empty device list." loading="lazy"><figcaption>The Bluetooth Devices window.</figcaption></figure></li>
         <li>Double-click your speaker in the list. Once its status shows <strong>Connected</strong>,
-          you can close the window.</li>
+          you can close the window.<figure class="shot"><img src="media/bluetooth-connect.png" alt="The Bluetooth Devices window with a headphones device selected and its status window reading Disconnected, before connecting." loading="lazy"><figcaption>Pairing the speaker.</figcaption></figure></li>
       </ol>
       <div class="callout tip">
         <div class="callout-title">💾 Pairs once</div>
@@ -525,6 +525,7 @@ sudo apt-get install -y pipewire pipewire-jack pipewire-audio-client-libraries w
       <p>Open the file manager and navigate to
       <code class="inline">~/ArduinoApps/modulino-udp-pure-data-bridge/</code>, then double-click
       <code class="inline">start-pd.desktop</code>.</p>
+      <figure class="shot"><img src="media/start-puredata.png" alt="The file manager showing the project folder, with the 'Start PureData' launcher file selected." loading="lazy"><figcaption>Double-click <strong>Start PureData</strong>.</figcaption></figure>
       <p>A terminal window opens showing the audio connection status, and Pure Data launches with
       <code class="inline">main.pd</code> loaded automatically. The launcher waits for PipeWire to
       register the audio sink, then connects Pure Data's output to the Bluetooth speaker (falling back
@@ -549,6 +550,7 @@ sudo apt-get install -y pipewire pipewire-jack pipewire-audio-client-libraries w
         <li><strong>Press play</strong> &mdash; click <strong>PLAY</strong> in the Transport section.
           The beat grid starts cycling and you'll hear the default drum pattern.</li>
       </ol>
+      <figure class="shot"><img src="media/puredata-patch.png" alt="The Pure Data patch: an Audio On toggle, the Transport section with play and tempo, the drum machine grid for kick, snare, hat and clap, the Modulino UDP input section, the master volume and the synth lead controls." loading="lazy"><figcaption>The patch, with the <strong>AUDIO ON</strong> and <strong>play / stop</strong> toggles at top left.</figcaption></figure>
       <h3 style="margin:18px 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim)">Hardware controls</h3>
       <table class="spec">
         <tr><th>Control</th><th>Effect</th></tr>
@@ -583,6 +585,7 @@ sudo apt-get install -y pipewire pipewire-jack pipewire-audio-client-libraries w
       <p>Open a browser on the UNO Q and go to <code class="inline">http://IP_ADDRESS:7000</code> to
       see a live dashboard of every connected Modulino node &mdash; handy for confirming everything's
       detected and sending data before you dive into the patch.</p>
+      <figure class="shot"><img src="media/dashboard.png" alt="The live dashboard: current values of the Distance, Movement, Knob and Buttons modules, and a UDP output section with the host and port fields and a Save button." loading="lazy"><figcaption>The live dashboard on port 7000.</figcaption></figure>
       <div class="callout tip">
         <div class="callout-title">📖 Full source</div>
         This guide is an interactive companion to Arduino's own

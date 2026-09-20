@@ -359,6 +359,18 @@ main.content {
 .prose li { margin-bottom: 6px; }
 .prose strong { color: var(--text); }
 
+/* Screenshots from the original tutorial, placed inside step text */
+figure.shot { margin: 12px 0 16px; }
+figure.shot img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+figure.shot figcaption { margin-top: 6px; font-size: 11.5px; color: var(--text-dim); }
+li > figure.shot { margin: 8px 0 10px; }
+
 .callout {
   border-radius: var(--radius);
   padding: 12px 14px;

@@ -119,6 +119,8 @@ Lab project changes.
 
 ## Credits
 
+Software screenshots (App Lab, HID Bridge, RetroArch, Bluetooth, Pure Data…) are from the original Arduino Project Hub tutorial (GPL3+), stored in `media/`.
+
 - Guide content adapted from Arduino's DIY Synth tutorial by
   Arduino_Genuino (GPL3+).
 - Reference CAD models from docs.arduino.cc.
