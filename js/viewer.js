@@ -140,6 +140,12 @@ export class AssemblyViewer {
     const h = Math.max(1, rect.height);
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
+    // Immersive layout: the glass card covers the right edge of a full-bleed
+    // canvas. CSS reserves that strip via --stage-right (px); shift the view
+    // so the model centres in the uncovered part instead of under the card.
+    const shift = parseFloat(getComputedStyle(this.canvas.parentElement).getPropertyValue('--stage-right')) || 0;
+    if (shift > 0) this.camera.setViewOffset(w, h, shift / 2, 0, w, h);
+    else this.camera.clearViewOffset();
     this.camera.updateProjectionMatrix();
   }
 

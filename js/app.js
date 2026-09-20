@@ -368,9 +368,9 @@ function setLayout(name) {
 
 function loadLayout() {
   try {
-    return localStorage.getItem(LAYOUT_KEY) || 'split';
+    return localStorage.getItem(LAYOUT_KEY) || 'immersive';
   } catch (e) {
-    return 'split';
+    return 'immersive';
   }
 }
 
