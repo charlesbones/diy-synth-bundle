@@ -11,17 +11,33 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 //     <key>: {
 //       file: 'models/thing.stl',       // path relative to that project's index.html
 //       color: 0xrrggbb,
-//       exact: true,                    // true: parts from one shared assembly
-//                                        //   export, already mutually aligned --
-//                                        //   used as-is with no transform.
-//                                        // false: independently-sourced model
-//                                        //   (e.g. a vendor's separate CAD
-//                                        //   export) that needs hand-placing.
-//       transform: { pos:[x,y,z], rot:[rx,ry,rz] },  // target placement (non-exact only)
-//       local: { centerXY:[x,y], minZ }, // that model's own bbox, used to
-//                                        // align its bottom face + XY center
-//                                        // onto `transform.pos` (non-exact only)
-//       explodeLift: 30,                 // optional: Z offset for "exploded" view (exact parts only)
+//
+//       // --- how the part is placed (pick ONE) ---------------------------
+//       // 1) exact: true                 parts from one shared assembly export,
+//       //                                already mutually aligned -- no transform.
+//       // 2) placement: { pos:[x,y,z], axis:[ax,ay,az], angle: deg }
+//       //                                a FreeCAD-style Placement: rotate the STL
+//       //                                about ITS OWN ORIGIN by `angle` around
+//       //                                `axis`, then translate by `pos`
+//       //                                (world = pos + R * point). Paste these
+//       //                                straight from tools/fc_export_placements.py.
+//       //                                `axis` defaults to [0,0,1], `angle` to 0.
+//       // 3) exact: false + transform + local   the older approximation: `local`
+//       //                                is the model's own bbox ({centerXY:[x,y],
+//       //                                minZ}); its bottom face + XY centre is
+//       //                                aligned onto `transform.pos`, then
+//       //                                `transform.rot` [rx,ry,rz] radians.
+//       //
+//       // --- repeats -------------------------------------------------------
+//       // instances: [ {pos,axis,angle}, ... ]   place the SAME model many times
+//       //                                (e.g. every screw of one size). All the
+//       //                                instances share one geometry and one
+//       //                                colour/opacity, and show/highlight/dim/
+//       //                                explode as a single part. Replaces
+//       //                                `placement`.
+//       //
+//       explodeLift: 30,                 // optional: extra Z (mm) in the "exploded"
+//                                        // view, added on top of the part's own height
 //     },
 //     ...
 //   }
@@ -44,6 +60,17 @@ function loadGeometry(file) {
       (err) => reject(err)
     );
   });
+}
+
+// FreeCAD-style Placement: world = pos + R(axis, angle) * point.
+function applyPlacement(obj, p) {
+  const pos = p.pos || [0, 0, 0];
+  obj.position.set(pos[0], pos[1], pos[2]);
+  const ax = p.axis || [0, 0, 1];
+  obj.quaternion.setFromAxisAngle(
+    new THREE.Vector3(ax[0], ax[1], ax[2]).normalize(),
+    THREE.MathUtils.degToRad(p.angle || 0)
+  );
 }
 
 export class AssemblyViewer {
@@ -134,27 +161,42 @@ export class AssemblyViewer {
       transparent: true,
       opacity: 1,
     });
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.userData.baseColor = def.color;
 
-    if (!def.exact) {
-      const info = def.local;
-      const t = def.transform;
-      if (info && t) {
-        mesh.position.set(
-          t.pos[0] - info.centerXY[0],
-          t.pos[1] - info.centerXY[1],
-          t.pos[2] - info.minZ
-        );
+    let obj;
+    if (def.instances && def.instances.length) {
+      // many copies of one model: a Group whose children share geometry+material
+      obj = new THREE.Group();
+      for (const inst of def.instances) {
+        const m = new THREE.Mesh(geometry, material);
+        applyPlacement(m, inst);
+        obj.add(m);
       }
-      if (t && t.rot) {
-        mesh.rotation.set(t.rot[0], t.rot[1], t.rot[2]);
+    } else {
+      obj = new THREE.Mesh(geometry, material);
+      if (def.placement) {
+        applyPlacement(obj, def.placement);
+      } else if (!def.exact) {
+        const info = def.local;
+        const t = def.transform;
+        if (info && t) {
+          obj.position.set(
+            t.pos[0] - info.centerXY[0],
+            t.pos[1] - info.centerXY[1],
+            t.pos[2] - info.minZ
+          );
+        }
+        if (t && t.rot) {
+          obj.rotation.set(t.rot[0], t.rot[1], t.rot[2]);
+        }
       }
     }
+    obj.userData.material = material;
+    obj.userData.baseColor = def.color;
+    obj.userData.basePosZ = obj.position.z; // so "exploded" lifts ADD to it
 
-    this.group.add(mesh);
-    this.meshes[key] = mesh;
-    return mesh;
+    this.group.add(obj);
+    this.meshes[key] = obj;
+    return obj;
   }
 
   /**
@@ -178,7 +220,7 @@ export class AssemblyViewer {
       const visible = show.has(key);
       mesh.visible = visible;
       if (!visible) continue;
-      const mat = mesh.material;
+      const mat = mesh.userData.material;
       if (highlight.has(key)) {
         mat.opacity = 1;
         mat.color.set(mesh.userData.baseColor);
@@ -207,16 +249,16 @@ export class AssemblyViewer {
 
   /**
    * Lift apart, along Z, any part whose definition carries an `explodeLift`
-   * (see the PARTS shape documented at the top of this file) -- typically
-   * the "exact" parts of a stacked enclosure, since they sit at identity
-   * transform and their Z stacking already matches how they mate.
+   * (see the PARTS shape documented at the top of this file). The lift is
+   * added to the part's own height, so hand/FreeCAD-placed parts keep their
+   * real position when not exploded.
    */
   setExplode(active) {
     for (const [key, def] of Object.entries(this.parts)) {
       if (!def.explodeLift) continue;
       const mesh = this.meshes[key];
       if (!mesh) continue;
-      mesh.position.z = active ? def.explodeLift : 0;
+      mesh.position.z = (mesh.userData.basePosZ || 0) + (active ? def.explodeLift : 0);
     }
   }
 
