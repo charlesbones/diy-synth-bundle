@@ -241,12 +241,16 @@ export class AssemblyViewer {
       mat.needsUpdate = true;
     }
 
-    if (config.camera) {
-      const { pos, target } = config.camera;
-      if (pos) this.camera.position.set(pos[0], pos[1], pos[2]);
-      if (target) this.controls.target.set(target[0], target[1], target[2]);
-      this.controls.update();
-    }
+    this.setCamera(config.camera);
+  }
+
+  /** Move the camera to a {pos, target} preset (no-op when omitted). */
+  setCamera(cam) {
+    if (!cam) return;
+    const { pos, target } = cam;
+    if (pos) this.camera.position.set(pos[0], pos[1], pos[2]);
+    if (target) this.controls.target.set(target[0], target[1], target[2]);
+    this.controls.update();
   }
 
   setBackground(hex) {

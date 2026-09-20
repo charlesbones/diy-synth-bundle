@@ -196,12 +196,14 @@ function renderViewerToolbar(step) {
     assembledBtn.addEventListener('click', () => {
       state.exploded[step.id] = false;
       v.setExplode(false);
+      v.setCamera(cfg.camera);
       syncActive();
       setViewerAlt(describeStep(step));
     });
     explodedBtn.addEventListener('click', () => {
       state.exploded[step.id] = true;
       v.setExplode(true);
+      v.setCamera(cfg.explodedCamera);
       syncActive();
       setViewerAlt(describeStep(step, 'Currently shown exploded, with the parts spaced apart to see how they stack.'));
     });
@@ -261,6 +263,7 @@ async function applyStepToViewer(step) {
   });
   const exploded = cfg.explodable ? !!state.exploded[step.id] : false;
   v.setExplode(exploded);
+  if (exploded) v.setCamera(cfg.explodedCamera);
   setViewerAlt(describeStep(step, exploded ? 'Currently shown exploded, with the parts spaced apart to see how they stack.' : null));
   // trigger a resize in case layout just changed visibility
   window.dispatchEvent(new Event('resize'));

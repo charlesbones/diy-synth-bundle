@@ -12,6 +12,7 @@ export const PHASES = [
 ];
 
 const WIDE_CAM = { pos: [260, -320, 260], target: [-3, -13, 10] };
+const EXPLODED_CAM = { pos: [300, -390, 310], target: [-3, -13, 38] };
 const BASE_CAM = { pos: [180, -230, 190], target: [-3, -13, 8] };
 const TILT_CAM = { pos: [150, -160, 160], target: [53, -27, 15] };
 const TILT_CLOSE_CAM = { pos: [90, -100, 110], target: [53, -27, 20] };
@@ -85,6 +86,7 @@ export const STEPS = [
       show: ['base', 'cover', 'buttonsPadBent', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'modButtons', 'modKnob', 'modDistance'],
       highlight: ['base', 'cover', 'buttonsPadBent', 'tiltCross', 'tiltPlane', 'tiltKnob', 'modMovement', 'modButtons', 'modKnob', 'modDistance'],
       camera: WIDE_CAM,
+      explodedCamera: EXPLODED_CAM,
       explodable: true,
     },
     alt: 'The six printed instrument parts and four Modulino nodes — Base, Cover, Buttons Pad, Tilt Cross, Tilt Plane, Tilt Knob, Movement, Buttons, Knob and Distance — shown together at an angle. Use the Assembled/Exploded toggle above the viewer to space them apart and see how they stack.',
