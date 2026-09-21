@@ -1,127 +1,85 @@
 # DIY Synth — Interactive Build Guide
 
-A single-page, dependency-light interactive companion to Arduino's
+An interactive companion to Arduino's
 [DIY Synth](https://projecthub.arduino.cc/Arduino_Genuino/diy-synth-a794df)
-tutorial. It walks through hardware setup, 3D-printing and assembling a
-Modulino-powered instrument (with a live, rotatable 3D viewer for every
-assembly step), and the Pure Data / Bluetooth setup that turns it into a
+tutorial. It walks through the hardware setup, printing and assembling the
+instrument (with a rotatable 3D model that follows every assembly step, plus an
+exploded view) and the Pure Data and Bluetooth setup that turns the UNO Q into a
 drum machine and polyphonic synthesizer.
 
-No build step, no dependencies to install — it's plain HTML/CSS/JS plus a
-vendored copy of [three.js](https://threejs.org/) for the 3D viewer.
+It is plain HTML, CSS and JavaScript with a vendored copy of
+[three.js](https://threejs.org/) for the 3D viewer. There is no build step.
 
-## Running it locally
+## Where the information comes from
 
-Because the page uses ES modules and loads `.stl` files, open it through a
-local server rather than as a `file://` URL (browsers block module/`fetch`
-requests from `file://`):
+| What | Source |
+|---|---|
+| Step text, parts list, tips, controls table | Adapted from the Arduino Project Hub tutorial above, by Arduino_Genuino (GPL3+). Screw counts in the assembly steps follow the CAD assembly instead (see below); the parts list in "What you'll need" is the tutorial's own. |
+| Software screenshots (`media/`) | Taken from the same tutorial: the live sensor dashboard, the Bluetooth pairing windows, the Pure Data launcher and the Pure Data patch. |
+| Printed parts (`base`, `cover`, `buttons-pad`, `tilt-cross`, `tilt-plane`, `tilt-knob`) | The STL files attached to the tutorial. They come from one assembly, so their coordinates already line up. The tutorial also ships a `.3mf` slicer profile, which is mentioned in the text but not stored here. |
+| UNO Q and Modulino models (`uno-q`, `modulino-movement`, `modulino-buttons`, `modulino-knob`, `modulino-distance`) | Arduino's official STEP files from [docs.arduino.cc](https://docs.arduino.cc/) (each product's "3D Models" download), converted to STL. |
+| Where every board and screw sits | A FreeCAD assembly (`complete-project.FCStd`) built for this guide. Each part's Placement was exported and pasted into `js/parts.js`. The FreeCAD file is not stored in this repo. |
+| M3×6 and M3×10 screws | Modelled for this guide as ISO 10642 socket countersunk screws (no thread, origin at the head's top face). |
+| `buttons-pad-bent.stl` | Generated from the tutorial's `buttons-pad.stl`: all four spacer ears folded 180° back under the plate, so the folded state can be shown. |
+| App Lab project zip | The `DIY Synth.zip` from the tutorial's App Lab section. The guide links to a copy of it. |
 
-```bash
-python3 -m http.server 8420
-```
-
-Then visit `http://localhost:8420`.
-
-## Deploying to GitHub Pages
-
-1. Push this folder to a GitHub repository.
-2. In the repo's **Settings → Pages**, set the source to the branch/folder
-   containing `index.html` (root, or `/docs` if you move it there).
-3. GitHub Pages serves static files directly, so no build step is needed.
-
-## Downloads
-
-The Arduino App Lab project this guide's software steps are based on
-(`main.py`, the Pure Data patches, the sketch) is published as a
-[GitHub Release](https://github.com/charlesbones/diy-synth/releases)
-asset rather than tracked in the repo, to keep the git history free of
-binaries. A stable link that always resolves to the latest release's copy:
-
-```
-https://github.com/charlesbones/diy-synth/releases/latest/download/diy-synth.zip
-```
-
-To publish a new version of it: tag a release (see below), then attach
-`diy-synth.zip` as a release asset — the link above keeps working as long
-as the filename stays the same.
+Screw counts in the 3D model (6× M3×6, 12× M3×10) are what the CAD assembly
+contains. They differ from the tutorial's bill of materials. Also, the
+tutorial's Tilt-module step mentions screwing "the Knob on the Modulino
+Distance" together, which contradicts the later steps that mount the two
+separately on the Base. This guide follows the later steps and flags the
+discrepancy in that step's text.
 
 ## Project structure
 
 ```
-index.html          Page shell + import map for three.js
-css/style.css        All styling (light/dark theme aware)
-js/steps.js          All guide content (edit this to change wording/steps)
-js/parts.js          3D PARTS registry (which STL, color, placement)
-js/viewer.js         Three.js scene: loads/positions/highlights STL parts
-js/app.js            UI wiring: navigation, progress, checklists, toolbar
-js/vendor/           Vendored three.js build + STLLoader/OrbitControls
-models/              STL geometry (see below)
+index.html             Page shell: header, step card, 3D viewer, import map for three.js
+css/style.css           All styling: the Glacier palette, light and dark themes, the immersive layout
+js/steps.js             All guide content (see "Steps" below)
+js/parts.js             The 3D parts registry (see "Parts" below)
+js/viewer.js            three.js scene: loads, places, highlights and explodes the parts
+js/app.js               UI: step navigation, progress, checklists, viewer toolbar, theme toggle
+js/vendor/              three.js (MIT), plus its STLLoader and OrbitControls
+models/                 STL geometry for every part in js/parts.js
+media/                  Software screenshots used inside the step text
+.github/workflows/      GitHub Pages workflow
 ```
 
-## About the 3D models
+### Steps (`js/steps.js`)
 
-- `base.stl`, `cover.stl`, `buttons-pad.stl`, `tilt-cross.stl`,
-  `tilt-plane.stl`, `tilt-knob.stl` are the six printable parts, exported
-  together from one assembly — their coordinates line up exactly, so they
-  mate perfectly in the viewer.
-- `uno-q.stl`, `modulino-movement.stl`, `modulino-buttons.stl`,
-  `modulino-knob.stl`, `modulino-distance.stl` are reference models
-  converted from the official STEP files on
-  [docs.arduino.cc](https://docs.arduino.cc/) (product pages for the UNO Q
-  and each Modulino node). They come from separate CAD exports, not the
-  printed parts' assembly, so they can't mate by coordinates alone. Their
-  positions — and those of every screw — come from a real FreeCAD assembly:
-  each part is imported as a mesh, moved into place with its Placement, and
-  those numbers are copied into `js/parts.js`
-  (`placement: { pos, axis, angle }`, FreeCAD's own convention).
-- `m3x6-flathead-screw.stl` and `m3x10-flathead-screw.stl` are ISO 10642
-  socket countersunk screws (origin at the head's top face, tip pointing
-  down). `js/parts.js` places each size many times with `instances`:
-  M3×6 holds the UNO Q (2), the Knob (2) and the Distance sensor (2, tilted
-  45° with its board); M3×10 fixes the Movement to the Tilt Plane (2), goes
-  through the Button Pad's folded standoffs (2) and closes the Cover (8).
-  These counts are what the CAD assembly contains; the parts list in the
-  overview step is the original tutorial's.
-- `buttons-pad-bent.stl` is `buttons-pad.stl` with all four spacer ears
-  folded 180° back under the plate. Every assembled scene uses it; the prep
-  step has an As printed / Folded toggle.
-- The exploded view stacks every layer of the build (see the comment at the
-  top of `js/parts.js` for the order) and uses its own camera so nothing
-  leaves the frame. The welcome and last steps show it turning slowly.
-- The original tutorial's step 3 mentions screwing "the Knob on the
-  Modulino Distance" together as part of building the Tilt module, which
-  reads as inconsistent with the later steps describing them mounting to
-  separate individual spots on the Base — this guide follows the later steps
-  for where they actually end up, and flags the discrepancy in that step's text.
+An ordered array of step objects grouped into phases (Get Ready, Build the
+Instrument, Bring It to Life). A step has a title, kicker, HTML `body`, optional
+`checklist` chips and an `alt` description of the 3D scene for screen readers.
+Its optional `viewer` block controls the 3D scene:
 
-## Editing the guide
+- `show`, `highlight` and `dim`: which parts appear, which are emphasized,
+  and which are shown faded as already-built context
+- `camera`: the camera position and target
+- `explodable`, `explodedCamera`, `startExploded`, `autoRotate`: the
+  Assembled/Exploded toggle, the camera used while exploded, opening already
+  exploded, and a slow turntable (used by the welcome and last steps)
+- `variants`: a toggle that swaps one part for another (the Button Pad as
+  printed or folded)
 
-All step text, checklists, callouts and which parts appear in the viewer
-live in `js/steps.js` as a plain array — no HTML templating system, just
-edit the strings. Each step can optionally include a `viewer` block
-(`show`/`highlight`/`dim` part keys, a camera preset, `explodable`, or
-`variants` for a part-swap toggle, `explodedCamera`, `startExploded`,
-`autoRotate`) to control the 3D scene, or omit it
-entirely for a text-only step. 3D placement data (which file, color,
-exact geometry or a FreeCAD `placement`, plus `explodeLift`) lives separately in `js/parts.js`.
+A step without a `viewer` block is text only, and its card is centred.
 
-## Cutting a release
+### Parts (`js/parts.js`)
 
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
+One entry per 3D part: the STL file, its color, and where it goes.
 
-Then on GitHub: **Releases → Draft a new release**, pick the `v1.0.0` tag,
-give it a title, drag in `diy-synth.zip` under **Attach binaries**, and
-**Publish release**. Bump the tag (`v1.0.1`, …) and repeat whenever the App
-Lab project changes.
+- `exact: true` for the printed parts, which need no transform
+- `placement: { pos, axis, angle }` for the boards and screws, in FreeCAD's
+  Placement convention (rotate about the model's own origin, then translate).
+  The Distance board and its screws are tilted 45°.
+- `instances: [...]` places one screw model several times as one group
+  (UNO Q, Knob, Distance, Tilt module, Button Pad and Cover screws)
+- `explodeLift`: how far the part rises in the exploded view. The stacking
+  order is listed at the top of the file. Parts in different columns of the
+  instrument share a level.
 
 ## Credits
 
-Software screenshots (App Lab, HID Bridge, RetroArch, Bluetooth, Pure Data…) are from the original Arduino Project Hub tutorial (GPL3+), stored in `media/`.
-
-- Guide content adapted from Arduino's DIY Synth tutorial by
+- Guide content and screenshots adapted from Arduino's DIY Synth tutorial by
   Arduino_Genuino (GPL3+).
-- Reference CAD models from docs.arduino.cc.
+- UNO Q and Modulino reference CAD models from docs.arduino.cc.
 - Arduino, UNO and Modulino are trademarks of Arduino S.r.l.
