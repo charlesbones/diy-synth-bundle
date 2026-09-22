@@ -122,6 +122,23 @@ export class AssemblyViewer {
 
     this.meshes = {}; // key -> THREE.Mesh
 
+    // Hover: name the part under the cursor (see parts.js's `label`) in a
+    // small floating tag, and tint it so it's clear which mesh the name
+    // belongs to. A part with no `label` is skipped -- silently unnamed
+    // rather than showing its internal key.
+    this._hoverTag = document.createElement('div');
+    this._hoverTag.className = 'viewer-hover-tag';
+    document.body.appendChild(this._hoverTag);
+    this._hoveredKey = null;
+    this._raycaster = new THREE.Raycaster();
+    this._pointerNDC = new THREE.Vector2(-10, -10);
+    this._pointerActive = false;
+    this.canvas.addEventListener('pointermove', (e) => this._onPointerMove(e));
+    this.canvas.addEventListener('pointerleave', () => {
+      this._pointerActive = false;
+      this._setHoveredPart(null);
+    });
+
     this._resize();
     window.addEventListener('resize', () => this._resize());
 
@@ -155,8 +172,65 @@ export class AssemblyViewer {
   _tick() {
     this.controls.update();
     if (this._explodeAnims && this._explodeAnims.length) this._stepExplodeAnims();
+    this._updatePartHover();
     this.renderer.render(this.scene, this.camera);
     requestAnimationFrame(this._tick);
+  }
+
+  _onPointerMove(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    this._pointerNDC.set(
+      ((e.clientX - rect.left) / rect.width) * 2 - 1,
+      -((e.clientY - rect.top) / rect.height) * 2 + 1
+    );
+    this._pointerActive = true;
+    // follows the cursor regardless of what's under it -- harmless while hidden
+    this._hoverTag.style.left = e.clientX + 14 + 'px';
+    this._hoverTag.style.top = e.clientY + 14 + 'px';
+  }
+
+  // Raycast against every visible part and name whichever one is under the
+  // cursor. Instanced parts (screws) are a Group of child meshes sharing one
+  // material -- userData.key lives on the Group, so a hit on a child walks
+  // up to find it, and the whole set highlights together as one part.
+  _updatePartHover() {
+    if (!this._pointerActive) return;
+    this._raycaster.setFromCamera(this._pointerNDC, this.camera);
+    const hit = this._raycaster.intersectObjects(this.group.children, true)[0];
+    let key = null;
+    let obj = hit && hit.object;
+    while (obj && key === null) {
+      if (obj.userData.key) key = obj.userData.key;
+      obj = obj.parent;
+    }
+    this._setHoveredPart(key);
+  }
+
+  _setHoveredPart(key) {
+    const def = key ? this.parts[key] : null;
+    if (!def || !def.label) key = null; // nameless parts stay unhighlighted
+    if (this._hoveredKey === key) return;
+    if (this._hoveredKey) {
+      const prev = this.meshes[this._hoveredKey];
+      if (prev) prev.userData.material.emissive.set(0x000000);
+    }
+    this._hoveredKey = key;
+    if (key) {
+      const mesh = this.meshes[key];
+      const accent = this._accentColor();
+      mesh.userData.material.emissive.copy(accent).multiplyScalar(0.25);
+      this._hoverTag.textContent = this.parts[key].label;
+      this._hoverTag.classList.add('visible');
+      this.canvas.style.cursor = 'pointer';
+    } else {
+      this._hoverTag.classList.remove('visible');
+      this.canvas.style.cursor = '';
+    }
+  }
+
+  _accentColor() {
+    const hex = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+    return new THREE.Color(hex || '#2469d6');
   }
 
   // Eases every part mid-flight toward setExplode's target Z over EXPLODE_MS.
@@ -215,6 +289,7 @@ export class AssemblyViewer {
     obj.userData.material = material;
     obj.userData.baseColor = def.color;
     obj.userData.basePosZ = obj.position.z; // so "exploded" lifts ADD to it
+    obj.userData.key = key; // so hover can name/tint an instanced group as one part
 
     this.group.add(obj);
     this.meshes[key] = obj;
@@ -244,10 +319,10 @@ export class AssemblyViewer {
       mesh.visible = visible;
       if (!visible) continue;
       const mat = mesh.userData.material;
+      mat.emissive.set(0x000000); // baseline; _setHoveredPart tints this and always reverts to black
       if (highlight.has(key)) {
         mat.opacity = 1;
         mat.color.set(mesh.userData.baseColor);
-        mat.emissive = new THREE.Color(0x000000);
       } else if (dim.has(key)) {
         mat.opacity = 0.35;
         mat.color.set(0x9a978d);
@@ -257,6 +332,7 @@ export class AssemblyViewer {
       }
       mat.needsUpdate = true;
     }
+    this._setHoveredPart(null); // parts may have moved/hidden; drop any stale hover
 
     this.setCamera(config.camera);
     const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;

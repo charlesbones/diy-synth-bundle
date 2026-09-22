@@ -22,17 +22,20 @@
 
 export const PARTS = {
   base: {
+    label: 'Base',
     file: 'models/base.stl',
     exact: true,
     color: 0xcfcac0,
   },
   cover: {
+    label: 'Cover',
     file: 'models/cover.stl',
     exact: true,
     color: 0xe4e0d4,
     explodeLift: 125,
   },
   buttonsPad: {
+    label: 'Buttons Pad',
     file: 'models/buttons-pad.stl',
     exact: true,
     color: 0x2f8f8a,
@@ -44,24 +47,28 @@ export const PARTS = {
   // still `exact: true`. Used for every assembled scene; the flat original
   // above is only shown as the "As printed" side of the prep step's toggle.
   buttonsPadBent: {
+    label: 'Buttons Pad',
     file: 'models/buttons-pad-bent.stl',
     exact: true,
     color: 0x2f8f8a,
     explodeLift: 40,
   },
   tiltCross: {
+    label: 'Tilt Cross',
     file: 'models/tilt-cross.stl',
     exact: true,
     color: 0xb0562f,
     explodeLift: 10,
   },
   tiltPlane: {
+    label: 'Tilt Plane',
     file: 'models/tilt-plane.stl',
     exact: true,
     color: 0x2f6fb0,
     explodeLift: 25,
   },
   tiltKnob: {
+    label: 'Tilt Knob',
     file: 'models/tilt-knob.stl',
     exact: true,
     color: 0x8a2fb0,
@@ -70,24 +77,28 @@ export const PARTS = {
 
   // -- electronics: real placements from the FreeCAD assembly -------------
   unoQ: {
+    label: 'Arduino UNO Q',
     file: 'models/uno-q.stl',
     color: 0x1c7a3e,
     placement: { pos: [431, -111, -16], axis: [0, 0, 1], angle: 0 },
     explodeLift: 15,
   },
   modMovement: {
+    label: 'Modulino Movement',
     file: 'models/modulino-movement.stl',
     color: 0x6ab04c,
     placement: { pos: [66, -48, 15], axis: [0, 0, 1], angle: 90 },
     explodeLift: 40,
   },
   modButtons: {
+    label: 'Modulino Buttons',
     file: 'models/modulino-buttons.stl',
     color: 0xd4a017,
     placement: { pos: [-10, -53, 0], axis: [0, 0, 1], angle: 0 },
     explodeLift: 15,
   },
   modKnob: {
+    label: 'Modulino Knob',
     file: 'models/modulino-knob.stl',
     color: 0x9b59b6,
     placement: { pos: [-66, -53, 1], axis: [0, 0, 1], angle: 0 },
@@ -95,6 +106,7 @@ export const PARTS = {
   },
   // sits in the sloped seat on the left, tilted 45 degrees
   modDistance: {
+    label: 'Modulino Distance',
     file: 'models/modulino-distance.stl',
     color: 0xe74c3c,
     placement: { pos: [-79, -24, 14], axis: [-1, 0, 0], angle: 45 },
@@ -104,6 +116,7 @@ export const PARTS = {
   // -- screws (origin = head top centre, tip toward -Z) ---------------------
   // M3x6: 2 hold the UNO Q, 2 hold the Knob, 2 hold the Distance sensor
   screwsUnoQ: {
+    label: 'M3×6 screws · UNO Q',
     file: 'models/m3x6-flathead-screw.stl',
     color: 0xb8bec4,
     explodeLift: 32,
@@ -113,6 +126,7 @@ export const PARTS = {
     ],
   },
   screwsKnob: {
+    label: 'M3×6 screws · Knob',
     file: 'models/m3x6-flathead-screw.stl',
     color: 0xb8bec4,
     explodeLift: 32,
@@ -123,6 +137,7 @@ export const PARTS = {
   },
   // the Distance board sits tilted 45 degrees, so its screws are tilted too
   screwsDistance: {
+    label: 'M3×6 screws · Distance',
     file: 'models/m3x6-flathead-screw.stl',
     color: 0xb8bec4,
     explodeLift: 32,
@@ -134,6 +149,7 @@ export const PARTS = {
   // M3x10: 2 fix the Movement to the Tilt Plane, 2 go through the Button Pad's
   // folded standoffs, 8 close the Cover
   screwsTilt: {
+    label: 'M3×10 screws · Tilt module',
     file: 'models/m3x10-flathead-screw.stl',
     color: 0xb8bec4,
     explodeLift: 55,
@@ -143,6 +159,7 @@ export const PARTS = {
     ],
   },
   screwsPad: {
+    label: 'M3×10 screws · Buttons Pad',
     file: 'models/m3x10-flathead-screw.stl',
     color: 0xb8bec4,
     explodeLift: 60, // rides above the Button Pad
@@ -152,6 +169,7 @@ export const PARTS = {
     ],
   },
   screwsCover: {
+    label: 'M3×10 screws · Cover',
     file: 'models/m3x10-flathead-screw.stl',
     color: 0xb8bec4,
     explodeLift: 145, // rides above the Cover
