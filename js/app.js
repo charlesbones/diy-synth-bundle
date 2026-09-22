@@ -243,7 +243,9 @@ function renderViewerToolbar(step) {
     });
     els.viewerToolbar.appendChild(assembledBtn);
     els.viewerToolbar.appendChild(explodedBtn);
-    v.setExplode(isExploded());
+    // this fires while the step is still loading, not on a user click --
+    // jump straight there instead of animating from whatever the last step left behind
+    v.setExplode(isExploded(), { animate: false });
   }
 
   if (cfg.variants && cfg.variants.length) {
@@ -297,7 +299,7 @@ async function applyStepToViewer(step) {
     autoRotate: cfg.autoRotate,
   });
   const exploded = cfg.explodable ? !!state.exploded[step.id] : false;
-  v.setExplode(exploded);
+  v.setExplode(exploded, { animate: false }); // step just loaded -- snap, don't animate
   if (exploded) v.setCamera(cfg.explodedCamera);
   setViewerAlt(describeStep(step, exploded ? 'Currently shown exploded, with the parts spaced apart to see how they stack.' : null));
   // trigger a resize in case layout just changed visibility

@@ -154,8 +154,21 @@ export class AssemblyViewer {
 
   _tick() {
     this.controls.update();
+    if (this._explodeAnims && this._explodeAnims.length) this._stepExplodeAnims();
     this.renderer.render(this.scene, this.camera);
     requestAnimationFrame(this._tick);
+  }
+
+  // Eases every part mid-flight toward setExplode's target Z over EXPLODE_MS.
+  _stepExplodeAnims() {
+    const now = performance.now();
+    const DURATION = 550;
+    this._explodeAnims = this._explodeAnims.filter(({ mesh, from, to, start }) => {
+      const t = Math.min(1, (now - start) / DURATION);
+      const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic: quick start, gentle settle
+      mesh.position.z = from + (to - from) * eased;
+      return t < 1;
+    });
   }
 
   async _ensureMesh(key) {
@@ -267,14 +280,25 @@ export class AssemblyViewer {
    * Lift apart, along Z, any part whose definition carries an `explodeLift`
    * (see the PARTS shape documented at the top of this file). The lift is
    * added to the part's own height, so hand/FreeCAD-placed parts keep their
-   * real position when not exploded.
+   * real position when not exploded. The move is animated (see _tick);
+   * pass `animate: false` to jump straight there instead (used when a step
+   * loads already exploded, so it doesn't visibly assemble itself first).
    */
-  setExplode(active) {
+  setExplode(active, { animate = true } = {}) {
+    const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this._explodeAnims = [];
+    const now = performance.now();
     for (const [key, def] of Object.entries(this.parts)) {
       if (!def.explodeLift) continue;
       const mesh = this.meshes[key];
       if (!mesh) continue;
-      mesh.position.z = (mesh.userData.basePosZ || 0) + (active ? def.explodeLift : 0);
+      const target = (mesh.userData.basePosZ || 0) + (active ? def.explodeLift : 0);
+      if (!animate || calm) {
+        mesh.position.z = target;
+        continue;
+      }
+      if (mesh.position.z === target) continue;
+      this._explodeAnims.push({ mesh, from: mesh.position.z, to: target, start: now });
     }
   }
 
