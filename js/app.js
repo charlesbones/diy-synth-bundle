@@ -48,7 +48,6 @@ const els = {
   viewerToolbar: document.getElementById('viewerToolbar'),
   viewerLegend: document.getElementById('viewerLegend'),
   viewerAlt: document.getElementById('viewerAlt'),
-  approxBadge: document.getElementById('approxBadge'),
   chipRow: document.getElementById('chipRow'),
   navPrev: document.getElementById('navPrev'),
   navNext: document.getElementById('navNext'),
@@ -291,13 +290,14 @@ async function applyStepToViewer(step) {
   const cfg = step.viewer;
   if (!cfg) return;
   const v = ensureViewer();
-  await v.applyStep({
+  const applied = await v.applyStep({
     show: resolveShow(step, cfg.show || []),
     highlight: resolveShow(step, cfg.highlight || []),
     dim: resolveShow(step, cfg.dim || []),
     camera: cfg.camera,
     autoRotate: cfg.autoRotate,
   });
+  if (!applied) return; // the user already moved on to another step
   const exploded = cfg.explodable ? !!state.exploded[step.id] : false;
   v.setExplode(exploded, { animate: false }); // step just loaded -- snap, don't animate
   if (exploded) v.setCamera(cfg.explodedCamera);
@@ -319,10 +319,6 @@ function renderStep() {
 
   renderChips(step);
   els.stepBody.innerHTML = step.body;
-
-  const isDone = state.done.has(step.id);
-  els.doneToggle.classList.toggle('done', isDone);
-  els.doneToggle.innerHTML = isDone ? '✓ Marked complete' : 'Mark step complete';
 
   els.app.classList.toggle('no-viewer', !step.viewer); // lets CSS centre the immersive card
   // a step can open already exploded (the cover step does)
@@ -352,6 +348,16 @@ function renderStep() {
 
   els.content.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
   history.replaceState(null, '', '#' + step.id);
+  refreshDone();
+}
+
+// Updates the "Mark step complete" button, the sidebar ticks and the saved
+// progress. Kept apart from renderStep so ticking a step off doesn't also
+// reset the 3D camera and turntable.
+function refreshDone() {
+  const isDone = state.done.has(STEPS[state.index].id);
+  els.doneToggle.classList.toggle('done', isDone);
+  els.doneToggle.innerHTML = isDone ? '✓ Marked complete' : 'Mark step complete';
   renderSidebar();
   saveProgress();
 }
@@ -368,7 +374,7 @@ function markDoneAndAdvance() {
   if (state.index < STEPS.length - 1) {
     goTo(state.index + 1);
   } else {
-    renderStep();
+    refreshDone();
   }
 }
 
@@ -376,7 +382,7 @@ function toggleDone() {
   const step = STEPS[state.index];
   if (state.done.has(step.id)) state.done.delete(step.id);
   else state.done.add(step.id);
-  renderStep();
+  refreshDone();
 }
 
 function initLayout() {

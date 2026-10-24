@@ -220,6 +220,10 @@ export class AssemblyViewer {
     this.scene.add(this.shadow);
 
     this.meshes = {}; // key -> THREE.Mesh
+    this._loading = {}; // key -> in-flight/finished build promise (see _ensureMesh)
+    this._explodeAnims = [];
+    this._hoverDirty = false;
+    this._hoverCam = new THREE.Matrix4(); // camera pose at the last hover raycast
 
     // Hover: name the part under the cursor (see parts.js's `label`) in a
     // small floating tag, and tint it so it's clear which mesh the name
@@ -240,14 +244,6 @@ export class AssemblyViewer {
 
     this._resize();
     window.addEventListener('resize', () => this._resize());
-
-    // keep the viewer background in sync if the OS/browser theme flips
-    // while the page is open (initial color was read at construction time)
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const syncBg = () => this.setBackground(
-      getComputedStyle(document.documentElement).getPropertyValue(this.backgroundVar).trim() || '#ddd8cc'
-    );
-    mq.addEventListener('change', syncBg);
 
     this._tick = this._tick.bind(this);
     requestAnimationFrame(this._tick);
@@ -271,7 +267,7 @@ export class AssemblyViewer {
   _tick() {
     if (this._camAnim) this._stepCameraAnim();
     this.controls.update();
-    if (this._explodeAnims && this._explodeAnims.length) this._stepExplodeAnims();
+    if (this._explodeAnims.length) this._stepExplodeAnims();
     this._updatePartHover();
     this.renderer.render(this.scene, this.camera);
     requestAnimationFrame(this._tick);
@@ -284,6 +280,7 @@ export class AssemblyViewer {
       -((e.clientY - rect.top) / rect.height) * 2 + 1
     );
     this._pointerActive = true;
+    this._hoverDirty = true;
     // follows the cursor regardless of what's under it -- harmless while hidden
     this._hoverTag.style.left = e.clientX + 14 + 'px';
     this._hoverTag.style.top = e.clientY + 14 + 'px';
@@ -297,6 +294,10 @@ export class AssemblyViewer {
   // whole set highlights together as one part.
   _updatePartHover() {
     if (!this._pointerActive) return;
+    // a resting cursor needs a new raycast only when the pointer, camera or parts moved
+    if (!this._hoverDirty && !this._explodeAnims.length && this._hoverCam.equals(this.camera.matrixWorld)) return;
+    this._hoverDirty = false;
+    this._hoverCam.copy(this.camera.matrixWorld);
     this._raycaster.setFromCamera(this._pointerNDC, this.camera);
     const hit = this._raycaster.intersectObjects(this.group.children.filter((o) => o.visible), true)[0];
     let key = null;
@@ -347,8 +348,19 @@ export class AssemblyViewer {
     });
   }
 
-  async _ensureMesh(key) {
-    if (this.meshes[key]) return this.meshes[key];
+  // One build per part, however many steps ask for it while it loads -- two
+  // overlapping builds would leave an orphan copy in the scene, visible forever.
+  _ensureMesh(key) {
+    if (!this._loading[key]) {
+      this._loading[key] = this._buildMesh(key).catch((e) => {
+        delete this._loading[key]; // let a later step retry a failed load
+        throw e;
+      });
+    }
+    return this._loading[key];
+  }
+
+  async _buildMesh(key) {
     const def = this.parts[key];
     if (!def) throw new Error(`Unknown part "${key}" -- check this project's parts.js`);
     const geometry = await loadGeometry(def.file);
@@ -408,14 +420,18 @@ export class AssemblyViewer {
    *   camera: {pos:[x,y,z], target:[x,y,z]} // optional camera preset
    *   autoRotate: true             // optional slow turntable until the user drags
    * }
+   * Resolves true once applied, false if a newer applyStep took over while
+   * this one was still loading parts (the caller should then do nothing more).
    */
   async applyStep(config) {
+    const run = (this._stepRun = (this._stepRun || 0) + 1);
     const show = new Set(config.show || []);
     const highlight = new Set(config.highlight || []);
     const dim = new Set(config.dim || []);
 
     // ensure meshes for everything we need exist
     await Promise.all([...show].map((k) => this._ensureMesh(k)));
+    if (run !== this._stepRun) return false;
 
     for (const [key, mesh] of Object.entries(this.meshes)) {
       const visible = show.has(key);
@@ -436,12 +452,14 @@ export class AssemblyViewer {
       mat.needsUpdate = true;
     }
     this._setHoveredPart(null); // parts may have moved/hidden; drop any stale hover
+    this._hoverDirty = true;
     this._updateShadow();
 
     // the first step snaps into place; every later one glides there
     this.setCamera(config.camera, { animate: this._hasStepped });
     this._hasStepped = true;
     this.controls.autoRotate = !!config.autoRotate && !prefersReducedMotion();
+    return true;
   }
 
   // Size and place the floor shadow under the visible parts. Parts may be
@@ -525,9 +543,5 @@ export class AssemblyViewer {
       if (mesh.position.z === target) continue;
       this._explodeAnims.push({ mesh, from: mesh.position.z, to: target, start: now });
     }
-  }
-
-  resize() {
-    this._resize();
   }
 }
