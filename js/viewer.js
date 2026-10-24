@@ -46,13 +46,88 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 const cache = new Map(); // file -> THREE.BufferGeometry
 const loader = new STLLoader();
 
+const prefersReducedMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+// An STL is a soup of flat triangles, which facets every curved surface (screw
+// shafts, knobs). Rebuild the normals so each vertex averages the faces around
+// it that lean less than `maxAngle` (~35 deg) from its own face: curves turn
+// smooth, real edges (board corners, the hex socket) stay sharp.
+function creaseNormals(geometry, maxAngle = 0.6) {
+  const pos = geometry.attributes.position;
+  const tris = pos.count / 3;
+  const fn = new Float32Array(tris * 3); // face normals
+  const keys = new Array(pos.count); // quantised position of each vertex
+  const touching = new Map(); // quantised position -> faces that meet there
+  const a = new THREE.Vector3();
+  const b = new THREE.Vector3();
+  const c = new THREE.Vector3();
+  for (let f = 0; f < tris; f++) {
+    a.fromBufferAttribute(pos, f * 3);
+    b.fromBufferAttribute(pos, f * 3 + 1);
+    c.fromBufferAttribute(pos, f * 3 + 2);
+    b.sub(a).cross(c.sub(a)).normalize(); // a zero-area triangle stays (0,0,0)
+    fn[f * 3] = b.x;
+    fn[f * 3 + 1] = b.y;
+    fn[f * 3 + 2] = b.z;
+    for (let v = 0; v < 3; v++) {
+      const i = f * 3 + v;
+      const k = `${Math.round(pos.getX(i) * 1000)},${Math.round(pos.getY(i) * 1000)},${Math.round(pos.getZ(i) * 1000)}`;
+      keys[i] = k;
+      if (!touching.has(k)) touching.set(k, []);
+      touching.get(k).push(f);
+    }
+  }
+  const cosMin = Math.cos(maxAngle);
+  const out = new Float32Array(pos.count * 3);
+  const n = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) {
+    const f = (i / 3) | 0;
+    n.set(0, 0, 0);
+    for (const g of touching.get(keys[i])) {
+      const dot = fn[f * 3] * fn[g * 3] + fn[f * 3 + 1] * fn[g * 3 + 1] + fn[f * 3 + 2] * fn[g * 3 + 2];
+      if (dot >= cosMin) n.set(n.x + fn[g * 3], n.y + fn[g * 3 + 1], n.z + fn[g * 3 + 2]);
+    }
+    n.normalize();
+    out[i * 3] = n.x;
+    out[i * 3 + 1] = n.y;
+    out[i * 3 + 2] = n.z;
+  }
+  geometry.setAttribute('normal', new THREE.BufferAttribute(out, 3));
+}
+
+// A tiny studio for reflections: grey walls, one big overhead softbox and two
+// dimmer side ones, baked once into an environment map (Z is up here).
+function makeEnvironment(renderer) {
+  const room = new THREE.Scene();
+  room.add(new THREE.Mesh(
+    new THREE.BoxGeometry(20, 20, 20),
+    new THREE.MeshBasicMaterial({ color: 0x8c96a3, side: THREE.BackSide })
+  ));
+  const softbox = (w, h, x, y, z, power) => {
+    const m = new THREE.Mesh(
+      new THREE.PlaneGeometry(w, h),
+      new THREE.MeshBasicMaterial({ color: new THREE.Color(power, power, power), side: THREE.DoubleSide })
+    );
+    m.position.set(x, y, z);
+    m.lookAt(0, 0, 0);
+    room.add(m);
+  };
+  softbox(8, 8, 0, 0, 9, 6);
+  softbox(6, 10, 9, -4, 3, 3);
+  softbox(6, 10, -9, 4, 3, 2);
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const env = pmrem.fromScene(room, 0.04).texture;
+  pmrem.dispose();
+  return env;
+}
+
 function loadGeometry(file) {
   if (cache.has(file)) return Promise.resolve(cache.get(file));
   return new Promise((resolve, reject) => {
     loader.load(
       file,
       (geometry) => {
-        geometry.computeVertexNormals();
+        creaseNormals(geometry);
         cache.set(file, geometry);
         resolve(geometry);
       },
@@ -88,9 +163,12 @@ export class AssemblyViewer {
     this.backgroundVar = options.backgroundVar || '--viewer-bg';
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.05;
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue(this.backgroundVar).trim() || '#ddd8cc');
+    this.scene.environment = makeEnvironment(this.renderer);
 
     const initCam = options.initialCamera || {};
     this.camera = new THREE.PerspectiveCamera(38, 1, 1, 5000);
@@ -104,21 +182,42 @@ export class AssemblyViewer {
     this.controls.minDistance = 40;
     this.controls.maxDistance = 900;
     this.controls.autoRotateSpeed = 1.2;
-    // a slow turntable (cover step) stops for good the moment someone grabs the model
-    this.controls.addEventListener('start', () => { this.controls.autoRotate = false; });
+    // grabbing the model stops the slow turntable for good, and cancels a camera move in flight
+    this.controls.addEventListener('start', () => {
+      this.controls.autoRotate = false;
+      this._camAnim = null;
+    });
     this.controls.update();
 
-    this.hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1.15);
+    // the environment map does most of the lighting now; these add direction
+    this.hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 0.35);
     this.scene.add(this.hemi);
-    this.key = new THREE.DirectionalLight(0xffffff, 1.4);
+    this.key = new THREE.DirectionalLight(0xffffff, 1.1);
     this.key.position.set(200, -150, 300);
     this.scene.add(this.key);
-    this.fill = new THREE.DirectionalLight(0xffffff, 0.5);
+    this.fill = new THREE.DirectionalLight(0xffffff, 0.3);
     this.fill.position.set(-200, 150, 120);
     this.scene.add(this.fill);
 
     this.group = new THREE.Group();
     this.scene.add(this.group);
+
+    // Soft contact shadow under whatever is shown: a blurred dark disc on the
+    // "floor", resized to the visible parts each step (see _updateShadow).
+    const blob = document.createElement('canvas');
+    blob.width = blob.height = 128;
+    const g = blob.getContext('2d');
+    const fade = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+    fade.addColorStop(0, 'rgba(0,0,0,0.38)');
+    fade.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = fade;
+    g.fillRect(0, 0, 128, 128);
+    this.shadow = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(blob), transparent: true, depthWrite: false, toneMapped: false })
+    );
+    this.shadow.renderOrder = -1; // drawn before the parts so it never covers them
+    this.scene.add(this.shadow);
 
     this.meshes = {}; // key -> THREE.Mesh
 
@@ -170,6 +269,7 @@ export class AssemblyViewer {
   }
 
   _tick() {
+    if (this._camAnim) this._stepCameraAnim();
     this.controls.update();
     if (this._explodeAnims && this._explodeAnims.length) this._stepExplodeAnims();
     this._updatePartHover();
@@ -190,13 +290,15 @@ export class AssemblyViewer {
   }
 
   // Raycast against every visible part and name whichever one is under the
-  // cursor. Instanced parts (screws) are a Group of child meshes sharing one
-  // material -- userData.key lives on the Group, so a hit on a child walks
-  // up to find it, and the whole set highlights together as one part.
+  // cursor. (three.js raycasts hidden objects too, so filter on `visible`:
+  // a part hidden this step must not answer or block.) Instanced parts
+  // (screws) are a Group of child meshes sharing one material -- userData.key
+  // lives on the Group, so a hit on a child walks up to find it, and the
+  // whole set highlights together as one part.
   _updatePartHover() {
     if (!this._pointerActive) return;
     this._raycaster.setFromCamera(this._pointerNDC, this.camera);
-    const hit = this._raycaster.intersectObjects(this.group.children, true)[0];
+    const hit = this._raycaster.intersectObjects(this.group.children.filter((o) => o.visible), true)[0];
     let key = null;
     let obj = hit && hit.object;
     while (obj && key === null) {
@@ -252,8 +354,9 @@ export class AssemblyViewer {
     const geometry = await loadGeometry(def.file);
     const material = new THREE.MeshStandardMaterial({
       color: def.color,
-      roughness: 0.55,
+      roughness: 0.5,
       metalness: 0.08,
+      envMapIntensity: 0.8,
       transparent: true,
       opacity: 1,
     });
@@ -333,19 +436,66 @@ export class AssemblyViewer {
       mat.needsUpdate = true;
     }
     this._setHoveredPart(null); // parts may have moved/hidden; drop any stale hover
+    this._updateShadow();
 
-    this.setCamera(config.camera);
-    const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    this.controls.autoRotate = !!config.autoRotate && !calm;
+    // the first step snaps into place; every later one glides there
+    this.setCamera(config.camera, { animate: this._hasStepped });
+    this._hasStepped = true;
+    this.controls.autoRotate = !!config.autoRotate && !prefersReducedMotion();
   }
 
-  /** Move the camera to a {pos, target} preset (no-op when omitted). */
-  setCamera(cam) {
+  // Size and place the floor shadow under the visible parts. Parts may be
+  // lifted by an explode right now, so measure their lowest point as if
+  // assembled -- the shadow stays on the floor while they rise.
+  _updateShadow() {
+    const all = new THREE.Box3();
+    let floor = Infinity;
+    for (const mesh of Object.values(this.meshes)) {
+      if (!mesh.visible) continue;
+      const box = new THREE.Box3().setFromObject(mesh);
+      all.union(box);
+      floor = Math.min(floor, box.min.z - (mesh.position.z - mesh.userData.basePosZ));
+    }
+    this.shadow.visible = floor !== Infinity;
+    if (!this.shadow.visible) return;
+    const c = all.getCenter(new THREE.Vector3());
+    const s = all.getSize(new THREE.Vector3());
+    this.shadow.position.set(c.x, c.y, floor - 0.6);
+    this.shadow.scale.set(s.x * 1.25 + 20, s.y * 1.25 + 20, 1);
+  }
+
+  /**
+   * Move the camera to a {pos, target} preset (no-op when omitted). Glides
+   * there over a moment; `animate: false` (or a reduced-motion setting) jumps.
+   */
+  setCamera(cam, { animate = true } = {}) {
     if (!cam) return;
-    const { pos, target } = cam;
-    if (pos) this.camera.position.set(pos[0], pos[1], pos[2]);
-    if (target) this.controls.target.set(target[0], target[1], target[2]);
-    this.controls.update();
+    const toPos = cam.pos ? new THREE.Vector3(...cam.pos) : this.camera.position.clone();
+    const toTarget = cam.target ? new THREE.Vector3(...cam.target) : this.controls.target.clone();
+    if (!animate || prefersReducedMotion()) {
+      this._camAnim = null;
+      this.camera.position.copy(toPos);
+      this.controls.target.copy(toTarget);
+      this.controls.update();
+      return;
+    }
+    this._camAnim = {
+      fromPos: this.camera.position.clone(),
+      fromTarget: this.controls.target.clone(),
+      toPos,
+      toTarget,
+      start: performance.now(),
+    };
+  }
+
+  // Eases the camera and its look-at point toward setCamera's goal.
+  _stepCameraAnim() {
+    const a = this._camAnim;
+    const t = Math.min(1, (performance.now() - a.start) / 700);
+    const eased = 1 - Math.pow(1 - t, 3);
+    this.camera.position.lerpVectors(a.fromPos, a.toPos, eased);
+    this.controls.target.lerpVectors(a.fromTarget, a.toTarget, eased);
+    if (t === 1) this._camAnim = null;
   }
 
   setBackground(hex) {
@@ -361,7 +511,6 @@ export class AssemblyViewer {
    * loads already exploded, so it doesn't visibly assemble itself first).
    */
   setExplode(active, { animate = true } = {}) {
-    const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     this._explodeAnims = [];
     const now = performance.now();
     for (const [key, def] of Object.entries(this.parts)) {
@@ -369,7 +518,7 @@ export class AssemblyViewer {
       const mesh = this.meshes[key];
       if (!mesh) continue;
       const target = (mesh.userData.basePosZ || 0) + (active ? def.explodeLift : 0);
-      if (!animate || calm) {
+      if (!animate || prefersReducedMotion()) {
         mesh.position.z = target;
         continue;
       }
