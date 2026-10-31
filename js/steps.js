@@ -242,14 +242,6 @@ export const STEPS = [
     alt: 'A close-up of the blue Tilt Plane with the green Modulino Movement board screwed on top of it by two M3x10 screws and the purple Tilt Knob bracket stacked beside it, shown on their own.',
     body: `
       <p>Place the Modulino Movement on the Tilt Plane and screw it down with 2 M3×10 screws.</p>
-      <div class="callout warn">
-        <div class="callout-title">⚠️ About "the Knob on the Distance"</div>
-        The original tutorial's wording for this step also mentions screwing "the Knob on the
-        Modulino Distance" together here &mdash; but later steps separately describe
-        screwing the Knob and the Distance sensor into their own individual spots on the Base, next
-        to the Buttons. This guide follows those later steps for where the two actually end up; the
-        sentence here most likely just means they get prepped as a small stacked pair before that.
-      </div>
     `,
   },
   {

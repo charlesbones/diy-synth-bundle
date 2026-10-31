@@ -24,11 +24,7 @@ It is plain HTML, CSS and JavaScript with a vendored copy of
 | App Lab project zip | The `DIY Synth.zip` from the tutorial's App Lab section. The guide links to a copy of it. |
 
 Screw counts in the 3D model (6× M3×6, 12× M3×10) are what the CAD assembly
-contains. They differ from the tutorial's bill of materials. Also, the
-tutorial's Tilt-module step mentions screwing "the Knob on the Modulino
-Distance" together, which contradicts the later steps that mount the two
-separately on the Base. This guide follows the later steps and flags the
-discrepancy in that step's text.
+contains. They differ from the tutorial's bill of materials.
 
 ## Project structure
 
