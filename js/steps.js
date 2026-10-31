@@ -94,14 +94,11 @@ export const STEPS = [
       <ol>
         <li>Download the project zip:
           <div>
-            <a class="dl-btn" href="https://github.com/charlesbones/diy-synth/releases/latest/download/diy-synth.zip" download>
-              ⬇ Download diy-synth.zip <span class="size">(~33 KB)</span>
+            <a class="dl-btn" href="https://projects.arduinocontent.cc/19b61054-e00e-45b8-bddb-c481c43eedb3.zip" download>
+              ⬇ Download DIY Synth.zip
             </a>
           </div>
-          Mirrored from the <strong>Arduino App Lab</strong> section of the
-          <a href="https://projecthub.arduino.cc/Arduino_Genuino/diy-synth-a794df" target="_blank" rel="noopener">original tutorial</a> &mdash;
-          see the <a href="https://github.com/charlesbones/diy-synth/releases" target="_blank" rel="noopener">Releases page</a>
-          for other versions.
+          This link points at the file Arduino hosts for the original tutorial.
         </li>
         <li>Find the <strong>Arduino App Lab</strong> icon on the desktop or in the application menu and double-click it.</li>
         <li>Click <strong>Create new app</strong>, then choose <strong>Import app</strong>. Pick the ZIP you just downloaded and click <strong>Open</strong>.</li>

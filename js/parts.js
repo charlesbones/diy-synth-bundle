@@ -114,6 +114,8 @@ export const PARTS = {
   },
 
   // -- screws (origin = head top centre, tip toward -Z) ---------------------
+  // Screw heads rest 1.3-1.5 above the surface they clamp: the holes are plain (no
+  // countersink), so the cone head sits on top instead of sinking into the part.
   // M3x6: 2 hold the UNO Q, 2 hold the Knob, 2 hold the Distance sensor
   screwsUnoQ: {
     label: 'M3×6 screws · UNO Q',
@@ -121,8 +123,8 @@ export const PARTS = {
     color: 0xb8bec4,
     explodeLift: 32,
     instances: [
-      { pos: [31, 9, 3] },
-      { pos: [-20, -24, 3] },
+      { pos: [31, 9, 2.4] },
+      { pos: [-20, -24, 2.4] },
     ],
   },
   screwsKnob: {
@@ -131,8 +133,8 @@ export const PARTS = {
     color: 0xb8bec4,
     explodeLift: 32,
     instances: [
-      { pos: [-29, -32, 3] },
-      { pos: [-61, -48, 2] },
+      { pos: [-29, -32, 2.5] },
+      { pos: [-61, -48, 2.5] },
     ],
   },
   // the Distance board sits tilted 45 degrees, so its screws are tilted too
